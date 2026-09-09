@@ -11,6 +11,11 @@ class TranslationServiceProvider extends ServiceProvider
 {
     public function boot(): void
     {
+        // Hindari query ke database saat menjalankan perintah artisan (seperti migrate)
+        if (app()->runningInConsole()) {
+            return;
+        }
+
         // 1. Ambil locale yang sedang aktif (setelah diatur oleh Middleware)
         $locale = App::getLocale();
 

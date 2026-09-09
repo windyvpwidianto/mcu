@@ -13,7 +13,6 @@ use App\Models\Contractor;
 use App\Models\Department;
 use App\Models\Likelihood;
 use App\Helpers\FileHelper;
-use App\Helpers\MailHelper;
 use App\Models\ActionHazard;
 use App\Models\EventSubType;
 use App\Models\ErmAssignment;
@@ -23,10 +22,10 @@ use App\Models\RiskMatrixCell;
 use App\Models\RiskConsequence;
 use App\Models\UnsafeCondition;
 use Livewire\Attributes\Validate;
-use Illuminate\Support\Facades\DB;
 use App\Models\RiskAssessmentMatrix;
 use Illuminate\Support\Facades\Auth;
 use App\Helpers\DateBeforeOrEqualToday;
+use App\Services\HazardService;
 
 class HazardForm extends Component
 {
@@ -101,8 +100,10 @@ class HazardForm extends Component
     public $action_responsible_id;
     public $action_due_date;
     public $actual_close_date;
-    public $doc_deskripsi_path;
-    public $doc_corrective_path;
+    // Menyimpan sementara object file upload dari Livewire (TemporaryUploadedFile)
+    // File TIDAK langsung disimpan ke disk. Penyimpanan permanen hanya terjadi saat submit().
+    public $doc_deskripsi_temp  = null;
+    public $doc_corrective_temp = null;
     public $actions = []; // kumpulan action sebelum disimpan
     public $showActionModal = 'close'; // default tertutup
 
@@ -219,29 +220,21 @@ class HazardForm extends Component
     }
 
     // Hook untuk doc_deskripsi
+    // File hanya disimpan ke temporary Livewire storage. Kompresi & pemindahan
+    // ke folder permanen dilakukan oleh HazardService saat submit() dipanggil.
     public function updatedDocDeskripsi()
     {
-        $this->validate(['doc_deskripsi' => 'max:10240']); // Validasi awal 10MB max
-
-        // Hapus file lama jika user mengganti gambar sebelum submit
-        if ($this->doc_deskripsi_path) {
-            FileHelper::deleteFile($this->doc_deskripsi_path);
-        }
-
-        // Langsung kompres dan simpan path-nya
-        $this->doc_deskripsi_path = FileHelper::compressAndStore($this->doc_deskripsi, 'sebelum_perbaikan');
+        $this->validate(['doc_deskripsi' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240']);
+        // Simpan objek file sementara untuk diproses oleh service saat submit
+        $this->doc_deskripsi_temp = $this->doc_deskripsi;
     }
 
     // Hook untuk doc_corrective
     public function updatedDocCorrective()
     {
-        $this->validate(['doc_corrective' => 'max:10240']);
-
-        if ($this->doc_corrective_path) {
-            FileHelper::deleteFile($this->doc_corrective_path);
-        }
-
-        $this->doc_corrective_path = FileHelper::compressAndStore($this->doc_corrective, 'sesudah_perbaikan');
+        $this->validate(['doc_corrective' => 'nullable|file|mimes:jpg,jpeg,png,pdf,doc,docx|max:10240']);
+        // Simpan objek file sementara untuk diproses oleh service saat submit
+        $this->doc_corrective_temp = $this->doc_corrective;
     }
 
     // Menangkap data dari CKEditor 'action_description'
@@ -560,184 +553,54 @@ class HazardForm extends Component
         $this->dispatch('validate-description');
         $this->dispatch('validate-immediate_corrective_action');
 
-
         $this->validate();
-        $hasPartialAction = !empty($this->action_description);
 
-        if ($hasPartialAction) {
+        // Peringatan: ada action yang belum di-klik TAMBAH
+        if (!empty($this->action_description)) {
             $this->dispatch('alert', [
-                'text' => "Anda sudah mengisi Tindakan Lanjutan tetapi belum mengklik tombol TAMBAH!",
-                'duration' => 6000,
-                'close' => true,
+                'text'            => "Anda sudah mengisi Tindakan Lanjutan tetapi belum mengklik tombol TAMBAH!",
+                'duration'        => 6000,
+                'close'           => true,
                 'backgroundColor' => "linear-gradient(to right, #ff3333, #ff6666)",
             ]);
-            return; // Hentikan proses submit
+            return;
         }
-        DB::transaction(function () {
-            $lastReport = Hazard::latest('id')->first();
-            $nextId = $lastReport ? $lastReport->id + 1 : 1;
-            $referenceNumber = 'LH-' . str_pad($nextId, 5, '0', STR_PAD_LEFT);
 
-            $docDeskripsiPath = null;
-            $docCorrectivePath = null;
-
-            $tanggal_time = Carbon::createFromFormat('d-m-Y H:i', $this->tanggal)->format('Y-m-d H:i:s');
-            $tanggal = Carbon::createFromFormat('d-m-Y H:i', $this->tanggal)->format('Y-m-d');
-
-
-            $docDeskripsiPath = $this->doc_deskripsi_path;
-            $docCorrectivePath = $this->doc_corrective_path;
-
-            $riskLevel = null;
-            if ($this->consequence_id && $this->likelihood_id) {
-                $riskLevel = RiskMatrixCell::where('likelihood_id', $this->likelihood_id)
-                    ->where('risk_consequence_id', $this->consequence_id)
-                    ->value('severity');
-            }
-
-            $pelaporId = $this->pelapor_id ?: null;
-            $status = ($this->actions) ? 'submitted' : 'closed';
-
-            // 1. Simpan hazard
-            $hazard = Hazard::create([
-                'no_referensi'           => $referenceNumber,
-                'event_type_id'          => $this->tipe_bahaya,
-                'event_sub_type_id'      => $this->sub_tipe_bahaya,
-                'department_id'          => $this->department_id,
-                'contractor_id'          => $this->contractor_id,
-                'pelapor_id'             => $pelaporId,
-                'penanggung_jawab_id'    => $this->penanggungJawab,
-                'location_id'            => $this->location_id,
-                'location_specific'      => $this->location_specific,
-                'tanggal'                => $tanggal_time,
-                'description'            => $this->description,
-                'doc_deskripsi'          => $docDeskripsiPath,
+        // Delegasikan semua business logic ke HazardService
+        app(HazardService::class)->store(
+            data: [
+                'tipe_bahaya'                 => $this->tipe_bahaya,
+                'sub_tipe_bahaya'             => $this->sub_tipe_bahaya,
+                'department_id'               => $this->department_id,
+                'contractor_id'               => $this->contractor_id,
+                'pelapor_id'                  => $this->pelapor_id,
+                'manualPelaporName'           => $this->manualPelaporName,
+                'penanggungJawab'             => $this->penanggungJawab,
+                'location_id'                 => $this->location_id,
+                'location_specific'           => $this->location_specific,
+                'tanggal'                     => $this->tanggal,
+                'description'                 => $this->description,
+                'doc_deskripsi_temp'          => $this->doc_deskripsi_temp,
                 'immediate_corrective_action' => $this->immediate_corrective_action,
-                'doc_corrective'         => $docCorrectivePath,
-                'key_word'               => $this->keyWord,
-                'kondisi_tidak_aman_id'  => $this->kondisi_tidak_aman,
-                'tindakan_tidak_aman_id' => $this->tindakan_tidak_aman,
-                'consequence_id'         => $this->consequence_id,
-                'likelihood_id'          => $this->likelihood_id,
-                'risk_level'             => $riskLevel,
-                'status'                 => $status,
-                'manualPelaporName'      => $this->pelapor_id ? User::find($this->pelapor_id)?->name : $this->manualPelaporName,
-            ]);
+                'doc_corrective_temp'         => $this->doc_corrective_temp,
+                'keyWord'                     => $this->keyWord,
+                'kondisi_tidak_aman'          => $this->kondisi_tidak_aman,
+                'tindakan_tidak_aman'         => $this->tindakan_tidak_aman,
+                'consequence_id'              => $this->consequence_id,
+                'likelihood_id'               => $this->likelihood_id,
+            ],
+            actions: $this->actions
+        );
 
-            // 2. Simpan semua action
-            foreach ($this->actions as $act) {
-                // Gunakan ternary untuk mengecek apakah input tersedia
-                $due_date = !empty($act['due_date'])
-                    ? Carbon::createFromFormat('d-m-Y', $act['due_date'])->format('Y-m-d')
-                    : null;
-
-                $actual_close_date = !empty($act['actual_close_date'])
-                    ? Carbon::createFromFormat('d-m-Y', $act['actual_close_date'])->format('Y-m-d')
-                    : null;
-
-                ActionHazard::create([
-                    'hazard_id'         => $hazard->id,
-                    'original_date'     => $tanggal,
-                    'description'       => $act['description'],
-                    'due_date'          => $due_date,
-                    'actual_close_date' => $actual_close_date,
-                    'responsible_id'    => $act['responsible_id'],
-                ]);
-            }
-
-            // --- Tentukan Nama Lokasi/Penugasan yang Akan Ditampilkan di Email ---
-            $locationName = 'N/A';
-            if ($hazard->department_id && $hazard->department) {
-                // Jika Department ada, gunakan namanya
-                $locationName = $hazard->department->department_name;
-            } elseif ($hazard->contractor_id && $hazard->contractor) {
-                // Jika Department NULL/kosong, dan Contractor ada, gunakan namanya
-                // Asumsi: Nama kolom di model Department adalah 'department_name'
-                // dan nama kolom di model Contractor adalah 'name' (sesuaikan jika berbeda)
-                $locationName = $hazard->contractor->contractor_name;
-            }
-
-            // [START] Logika Baru Penentuan Nama Pelapor
-            $reporterName = 'Tidak Diketahui';
-            if ($hazard->pelapor_id) {
-                // Jika ada ID pelapor, ambil dari relasi User
-                // Asumsi relasi User di model Hazard bernama 'pelapor'.
-                // Menggunakan optional chaining (?->) untuk keamanan jika relasi belum dimuat.
-                $reporterName = $hazard->pelapor?->name ?? 'User Terdaftar';
-            } else {
-                // Jika tidak ada ID pelapor, ambil dari input manual
-                $reporterName = $hazard->manualPelaporName ?? 'Anonim';
-            }
-            // [END] Logika Baru Penentuan Nama Pelapor
-            // 3. Notifikasi
-            // Dapatkan Penanggung Jawab dari relasi
-            $penanggungJawab = $hazard->penanggung_jawab_id;
-            $responsibility = $hazard->penanggungJawab->name;
-            if ($penanggungJawab) {
-                defer(fn() => MailHelper::sendToUserId(
-                    $penanggungJawab,
-                    'Anda Menjadi PIC di laporan Hazard Ini',
-                    'emails.notification',
-                    [
-                        'subject'       => 'Laporan Hazard Baru',
-                        'title'         => 'Notifikasi Laporan Hazard',
-                        'messageText'   => "Telah dibuat laporan hazard baru.\nSilakan lakukan  pemeriksaan.",
-                        'additionalInfo' => "Nomor Laporan: $hazard->no_referensi\nNama Pelapor : $reporterName\nLokasi Penugasan: $locationName\nPenanggung Jawab Area: $responsibility\nStatus: $status",
-                        'actionUrl'     => route('hazard-detail', $hazard->id)
-                    ]
-                ));
-            }
-
-            // [START] Logika Baru: Notifikasi ke Semua Moderator
-            // Dapatkan semua ID pengguna moderator yang relevan
-            // Dapatkan semua ID pengguna moderator yang relevan
-            $moderatorIds = \App\Models\ModeratorAssignment::where('event_type_id', $hazard->event_type_id)
-                ->where(function ($query) use ($hazard) {
-                    // Moderator ditugaskan untuk Event Type ini,
-                    // DAN penugasan tersebut harus berlaku (cocok dengan laporan)
-
-                    // Kriteria 1: Penugasan bersifat umum (department_id dan contractor_id di assignment adalah NULL)
-                    $query->whereNull('department_id')
-                        ->whereNull('contractor_id');
-
-                    // Kriteria 2: Penugasan spesifik untuk Department
-                    if ($hazard->department_id) {
-                        $query->orWhere('department_id', $hazard->department_id);
-                    }
-
-                    // Kriteria 3: Penugasan spesifik untuk Contractor
-                    if ($hazard->contractor_id) {
-                        $query->orWhere('contractor_id', $hazard->contractor_id);
-                    }
-                })
-                ->distinct('user_id')
-                ->pluck('user_id');
-            // Kirim email ke setiap moderator
-            foreach ($moderatorIds as $moderatorId) {
-                defer(fn() => MailHelper::sendToUserId(
-                    $moderatorId,
-                    'Notifikasi Laporan Hazard',
-                    'emails.notification',
-                    [
-                        'subject'       => 'Laporan Hazard Baru',
-                        'title'         => 'Notifikasi Laporan Hazard',
-                        'messageText'   => "Telah dibuat laporan hazard baru.\nSilakan lakukan  pemeriksaan.",
-                        'additionalInfo' => "Nomor Laporan: $hazard->no_referensi\nNama Pelapor : $reporterName\nLokasi Penugasan: $locationName\nStatus: $status",
-                        'actionUrl'     => route('hazard-detail', $hazard->id)
-                    ]
-                ));
-            }
-            // [END] Logika Baru: Notifikasi ke Semua Moderator
-        });
-        // 4. Feedback ke user
         $this->dispatch('alert', [
-            'text' => "Laporan berhasil dikirim!",
-            'duration' => 5000,
-            'destination' => '/contact',
-            'newWindow' => true,
-            'close' => true,
+            'text'            => "Laporan berhasil dikirim!",
+            'duration'        => 5000,
+            'destination'     => '/contact',
+            'newWindow'       => true,
+            'close'           => true,
             'backgroundColor' => "background: linear-gradient(135deg, #00c853, #00bfa5);",
         ]);
+
         $this->resetForm();
     }
     public function edit($likelihoodId, $consequenceId)
@@ -813,14 +676,16 @@ class HazardForm extends Component
             'tanggal',
             'description',
             'doc_deskripsi',
+            'doc_deskripsi_temp',
             'immediate_corrective_action',
             'doc_corrective',
+            'doc_corrective_temp',
             'keyWord',
             'kondisi_tidak_aman',
             'tindakan_tidak_aman',
             'consequence_id',
             'likelihood_id',
-            'actions',  // <--- penting
+            'actions',
         ]);
         $this->dispatch('reset-all-editors');
     }

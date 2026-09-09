@@ -57,6 +57,7 @@ use App\Livewire\Mcu\McuDashboard;
 use App\Livewire\Mcu\McuResultList;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
+use App\Livewire\Public\HealthStatistics;
 use App\Livewire\Settings\Profile;
 use App\Livewire\Wpi\Index as WpiForm;
 use App\Livewire\Wpi\WpiList;
@@ -64,6 +65,7 @@ use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
+
 
 Route::get('/.well-known/assetlinks.json', function () {
     return response()->json([
@@ -77,6 +79,10 @@ Route::get('/.well-known/assetlinks.json', function () {
         ]
     ]);
 });
+
+// ── Halaman Publik: Statistik Kesehatan & K3 ──────────────────────────────
+// Dapat diakses tanpa login oleh siapapun
+Route::get('/', HealthStatistics::class)->name('health.statistics');
 
 Route::get('/view-document/{path}', function ($path) {
     try {
@@ -101,7 +107,6 @@ Route::get('/view-document/{path}', function ($path) {
 })->name('document.secure-view')->middleware('auth');
 
 Route::get('dashboard', Hazard::class)->middleware(['auth', 'verified'])->name('dashboard');
-Route::redirect('/', 'dashboard');
 Route::redirect('/eventReport/hazardReportGuest/3', '/hazard/form', 301);
 Route::get('hazard/form', HazardForm::class)->name('hazard-form');
 Route::get('api/hazards/data', [HazardController::class, 'getExcelData'])->name('hazards.excel.data');

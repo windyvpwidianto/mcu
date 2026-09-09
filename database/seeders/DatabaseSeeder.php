@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             // HazardWorkflowSeeder::class
             // WpiWorkflowSeeder::class,
             ScatOptionSeeder::class,
+            MenuSeeder::class,
         ]);
     }
 }

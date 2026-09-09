@@ -70,13 +70,17 @@ class HealthStatistics extends Component
             $year   = (int) $this->selectedYear;
             $months = collect(range(1, 12))->map(fn ($m) => Carbon::create($year, $m)->format('M'));
 
+            $isSqlite = \Illuminate\Support\Facades\DB::getDriverName() === 'sqlite';
+            $hazardMonthExpr = $isSqlite ? 'CAST(strftime(\'%m\', tanggal) AS INTEGER)' : 'MONTH(tanggal)';
+            $incidentMonthExpr = $isSqlite ? 'CAST(strftime(\'%m\', date_time) AS INTEGER)' : 'MONTH(date_time)';
+
             $hazardByMonth = Hazard::whereYear('tanggal', $year)
-                ->selectRaw('MONTH(tanggal) as month, COUNT(*) as total')
+                ->selectRaw("{$hazardMonthExpr} as month, COUNT(*) as total")
                 ->groupBy('month')
                 ->pluck('total', 'month');
 
             $incidentByMonth = IncidentReport::whereYear('date_time', $year)
-                ->selectRaw('MONTH(date_time) as month, COUNT(*) as total')
+                ->selectRaw("{$incidentMonthExpr} as month, COUNT(*) as total")
                 ->groupBy('month')
                 ->pluck('total', 'month');
 

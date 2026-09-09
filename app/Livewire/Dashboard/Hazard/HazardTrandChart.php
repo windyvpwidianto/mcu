@@ -71,8 +71,13 @@ class HazardTrandChart extends Component
             });
 
         // 2. Ambil Data Statistik (DITAMBAHKAN YEAR agar urutan kronologis benar)
+        $isSqlite = \Illuminate\Support\Facades\DB::getDriverName() === 'sqlite';
+        $selectRaw = $isSqlite
+            ? "CAST(strftime('%Y', tanggal) AS INTEGER) as year, CAST(strftime('%m', tanggal) AS INTEGER) as month, COUNT(*) as total"
+            : 'YEAR(tanggal) as year, MONTH(tanggal) as month, COUNT(*) as total';
+
         $chartStats = (clone $baseQuery)
-            ->selectRaw('YEAR(tanggal) as year, MONTH(tanggal) as month, COUNT(*) as total')
+            ->selectRaw($selectRaw)
             ->groupBy('year', 'month')
             ->orderBy('year')
             ->orderBy('month')

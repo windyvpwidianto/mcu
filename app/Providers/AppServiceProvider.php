@@ -35,10 +35,43 @@ class AppServiceProvider extends ServiceProvider
         // karena lingkungan cPanel/proxy sering tidak menyampaikan header HTTPS dengan benar.
         // APP_ENV diatur ke 'local' di .env Anda, jadi kita gunakan kondisi ini,
         // atau gunakan 'production' jika Anda sudah mengubahnya.
-        if (config('app.env') === 'local' || config('app.env') === 'production') {
+        // Force HTTPS hanya di production (bukan local/development)
+        if (config('app.env') === 'production') {
             URL::forceScheme('https');
         }
-        // === END: PERBAIKAN MIXED CONTENT ===
+
+        // === SQLite Compatibility Functions for MySQL Date Functions ===
+        $registerSqliteFunctions = function ($connection) {
+            if ($connection->getDriverName() === 'sqlite') {
+                $pdo = $connection->getPdo();
+                $pdo->sqliteCreateFunction('YEAR', fn($d) => $d ? (int) date('Y', strtotime($d)) : null);
+                $pdo->sqliteCreateFunction('MONTH', fn($d) => $d ? (int) date('n', strtotime($d)) : null);
+                $pdo->sqliteCreateFunction('LAST_DAY', fn($d) => $d ? date('Y-m-t', strtotime($d)) : null);
+                $pdo->sqliteCreateFunction('DATE_FORMAT', function ($d, $format) {
+                    if (!$d) return null;
+                    $replacements = [
+                        '%Y' => 'Y', '%y' => 'y', '%m' => 'm', '%c' => 'n',
+                        '%d' => 'd', '%e' => 'j', '%b' => 'M', '%M' => 'F',
+                        '%H' => 'H', '%h' => 'h', '%i' => 'i', '%s' => 's', '%p' => 'A',
+                    ];
+                    return date(strtr($format, $replacements), strtotime($d));
+                });
+            }
+        };
+
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Database\Events\ConnectionEstablished::class,
+            function (\Illuminate\Database\Events\ConnectionEstablished $event) use ($registerSqliteFunctions) {
+                $registerSqliteFunctions($event->connection);
+            }
+        );
+
+        try {
+            $defaultConn = \Illuminate\Support\Facades\DB::connection();
+            $registerSqliteFunctions($defaultConn);
+        } catch (\Throwable $e) {
+            // Abaikan jika database belum terhubung
+        }
 
         if (file_exists(base_path('routes/breadcrumbs.php'))) {
             require_once base_path('routes/breadcrumbs.php');

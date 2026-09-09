@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.archimining.tosar",
+    "sha256_cert_fingerprints": ["AB:3C:93:33:63:73:C6:67:8B:23:4E:91:A4:7B:69:B1:33:04:88:94:07:3E:D0:C3:58:65:C2:2C:9B:F7:88:8C"]
+  }
+}]

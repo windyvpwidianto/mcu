@@ -1,0 +1,52 @@
+/* 🎨 Flatpickr + DaisyUI Custom */
+
+/* Perkecil keseluruhan kalender */
+.flatpickr-calendar {
+    font-size: 0.8rem; /* lebih kecil dari default (1rem) */
+    border-radius: 0.75rem;
+    border: 1px solid hsl(var(--b3));
+    font-family: inherit;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* Perkecil header bulan */
+.flatpickr-months .flatpickr-month {
+    background: hsl(var(--p));
+    color: white;
+    border-radius: 0.5rem 0.5rem 0 0;
+    font-size: 0.85rem; /* perkecil teks bulan */
+    padding: 0.25rem 0; /* kurangi padding */
+}
+
+/* Perkecil nama hari */
+.flatpickr-weekday {
+    color: hsl(var(--p));
+    font-weight: 600;
+    font-size: 0.75rem; /* perkecil teks hari */
+}
+
+/* Perkecil kotak tanggal */
+.flatpickr-day {
+    border-radius: 0.5rem;
+    transition: all 0.2s ease;
+    width: 1.8rem;  /* default 2rem */
+    height: 1.8rem; /* default 2rem */
+    line-height: 1.8rem; /* sejajarkan teks */
+    font-size: 0.8rem; /* perkecil teks tanggal */
+}
+
+.flatpickr-day:hover {
+    background: hsl(var(--p));
+    color: white;
+}
+
+.flatpickr-day.today {
+    border: 1px solid hsl(var(--p));
+    font-weight: bold;
+    color: hsl(var(--p));
+}
+
+.flatpickr-day.selected {
+    background: hsl(var(--p));
+    color: white;
+}

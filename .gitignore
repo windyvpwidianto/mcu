@@ -1,0 +1,25 @@
+/.phpunit.cache
+/node_modules
+#/public/build
+/public/hot
+# /public/storage
+# /public/storage/sebelum_perbaikan
+# /public/storage/sesudah_perbaikan
+#/storage/*.key
+/storage/pail
+/app/Provider/AppServiceProvider.php
+/vendor
+.env*
+.phpactor.json
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/auth.json
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+#bootstrap/cache/config.php

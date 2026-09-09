@@ -1,0 +1,581 @@
+/* --- 1. IMPORTS --- */
+@import "tailwindcss";
+@import "../../vendor/livewire/flux/dist/flux.css";
+@import "flatpickr/dist/flatpickr.css";
+@import "flatpickr/dist/themes/airbnb.css";
+@import "flag-icons/css/flag-icons.min.css";
+
+/* --- 2. SOURCES --- */
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../vendor/livewire/flux-pro/stubs/**/*.blade.php';
+@source '../../vendor/livewire/flux/stubs/**/*.blade.php';
+
+/* --- 3. DAISYUI CUSTOM THEMES --- */
+@plugin "daisyui/theme" {
+    name: "fancytide";
+    default: false;
+    prefersdark: false;
+    color-scheme: "dark";
+    --color-base-100: oklch(27% 0.046 192.524);
+    --color-base-200: oklch(38% 0.063 188.416);
+    --color-base-300: oklch(43% 0.078 188.216);
+    --color-base-content: oklch(95% 0.051 180.801);
+    --color-primary: oklch(43% 0 0);
+    --color-primary-content: oklch(98% 0 0);
+    --color-secondary: oklch(44% 0.011 73.639);
+    --color-secondary-content: oklch(98% 0.001 106.423);
+    --color-accent: oklch(59% 0.249 0.584);
+    --color-accent-content: oklch(97% 0.014 343.198);
+    --color-neutral: oklch(38% 0.063 188.416);
+    --color-neutral-content: oklch(98% 0.014 180.72);
+    --color-info: oklch(62% 0.214 259.815);
+    --color-info-content: oklch(97% 0.014 254.604);
+    --color-success: oklch(70% 0.14 182.503);
+    --color-success-content: oklch(98% 0.014 180.72);
+    --color-warning: oklch(79% 0.184 86.047);
+    --color-warning-content: oklch(98% 0.026 102.212);
+    --color-error: oklch(65% 0.241 354.308);
+    --color-error-content: oklch(97% 0.014 343.198);
+    --radius-selector: 0rem;
+    --radius-field: 0rem;
+    --radius-box: 0rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.1875rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
+@plugin "daisyui/theme" {
+    name: "cookedzombie";
+    default: false;
+    prefersdark: false;
+    color-scheme: "dark";
+    --color-base-100: oklch(12% 0.042 264.695);
+    --color-base-200: oklch(20% 0.042 265.755);
+    --color-base-300: oklch(27% 0.041 260.031);
+    --color-base-content: oklch(96% 0.007 247.896);
+    --color-primary: oklch(70% 0.14 182.503);
+    --color-primary-content: oklch(98% 0.014 180.72);
+    --color-secondary: oklch(70% 0.14 182.503);
+    --color-secondary-content: oklch(98% 0.014 180.72);
+    --color-accent: oklch(58% 0.233 277.117);
+    --color-accent-content: oklch(96% 0.018 272.314);
+    --color-neutral: oklch(44% 0.043 257.281);
+    --color-neutral-content: oklch(98% 0.003 247.858);
+    --color-info: oklch(70% 0.165 254.624);
+    --color-info-content: oklch(28% 0.091 267.935);
+    --color-success: oklch(79% 0.209 151.711);
+    --color-success-content: oklch(26% 0.065 152.934);
+    --color-warning: oklch(75% 0.183 55.934);
+    --color-warning-content: oklch(26% 0.079 36.259);
+    --color-error: oklch(71% 0.194 13.428);
+    --color-error-content: oklch(27% 0.105 12.094);
+    --radius-selector: 0rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0rem;
+    --size-selector: 0.21875rem;
+    --size-field: 0.21875rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 1;
+    --noise-url: url("/noise.svg");
+}
+
+@plugin "daisyui/theme" {
+    name: "vibebutnew";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(96% 0.018 272.314);
+    --color-base-200: oklch(93% 0.034 272.788);
+    --color-base-300: oklch(87% 0.065 274.039);
+    --color-base-content: oklch(35% 0.144 278.697);
+    --color-primary: oklch(68% 0.169 237.323);
+    --color-primary-content: oklch(97% 0.013 236.62);
+    --color-secondary: oklch(60% 0.25 292.717);
+    --color-secondary-content: oklch(96% 0.016 293.756);
+    --color-accent: oklch(55% 0.046 257.417);
+    --color-accent-content: oklch(98% 0.003 247.858);
+    --color-neutral: oklch(35% 0.144 278.697);
+    --color-neutral-content: oklch(96% 0.018 272.314);
+    --color-info: oklch(60% 0.126 221.723);
+    --color-info-content: oklch(98% 0.019 200.873);
+    --color-success: oklch(60% 0.118 184.704);
+    --color-success-content: oklch(98% 0.014 180.72);
+    --color-warning: oklch(66% 0.179 58.318);
+    --color-warning-content: oklch(98% 0.022 95.277);
+    --color-error: oklch(58% 0.253 17.585);
+    --color-error-content: oklch(96% 0.015 12.422);
+    --radius-selector: 0rem;
+    --radius-field: 0rem;
+    --radius-box: 0.25rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 1;
+    --noise-url: url("/noise.svg");
+}
+
+@plugin "daisyui/theme" {
+    name: "mysteryriver";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(98% 0.014 180.72);
+    --color-base-200: oklch(95% 0.051 180.801);
+    --color-base-300: oklch(91% 0.096 180.426);
+    --color-base-content: oklch(38% 0.063 188.416);
+    --color-primary: oklch(89% 0.196 126.665);
+    --color-primary-content: oklch(27% 0.072 132.109);
+    --color-secondary: oklch(82% 0.12 346.018);
+    --color-secondary-content: oklch(28% 0.109 3.907);
+    --color-accent: oklch(82% 0.119 306.383);
+    --color-accent-content: oklch(29% 0.149 302.717);
+    --color-neutral: oklch(38% 0.063 188.416);
+    --color-neutral-content: oklch(98% 0.014 180.72);
+    --color-info: oklch(74% 0.16 232.661);
+    --color-info-content: oklch(29% 0.066 243.157);
+    --color-success: oklch(77% 0.152 181.912);
+    --color-success-content: oklch(27% 0.046 192.524);
+    --color-warning: oklch(82% 0.189 84.429);
+    --color-warning-content: oklch(27% 0.077 45.635);
+    --color-error: oklch(71% 0.202 349.761);
+    --color-error-content: oklch(28% 0.109 3.907);
+    --radius-selector: 0.25rem;
+    --radius-field: 0rem;
+    --radius-box: 0rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0;
+    --noise: 0;
+}
+
+@plugin "daisyui/theme" {
+    name: "goldmine";
+    default: false;
+    prefersdark: true;
+    color-scheme: "dark";
+
+    /* Background & Surface - Menggunakan warna batuan tambang (Deep Slate) */
+    --color-base-100: oklch(25% 0.02 260); /* Background utama (Gelap batuan) */
+    --color-base-200: oklch(20% 0.02 260); /* Sidebar/Card */
+    --color-base-300: oklch(15% 0.02 260); /* Input/Deep background */
+    --color-base-content: oklch(92% 0.01 260); /* Teks utama (Off-white) */
+
+    /* Primary - Warna Emas Murni (Muted Gold) */
+    --color-primary: oklch(82% 0.15 85); /* Emas yang lembut di mata */
+    --color-primary-content: oklch(25% 0.05 85); /* Teks di atas tombol emas */
+
+    /* Secondary - Warna Tembaga/Bronze (Earth tone) */
+    --color-secondary: oklch(65% 0.12 50);
+    --color-secondary-content: oklch(98% 0.01 50);
+
+    /* Accent - Warna Safety/Lampu Tambang */
+    --color-accent: oklch(75% 0.18 65);
+    --color-accent-content: oklch(20% 0.05 65);
+
+    /* Neutral - Warna Logam Industri */
+    --color-neutral: oklch(40% 0.03 260);
+    --color-neutral-content: oklch(95% 0.01 260);
+
+    /* Status Colors - Disesuaikan agar harmonis */
+    --color-info: oklch(70% 0.1 220); /* Biru redup */
+    --color-success: oklch(75% 0.12 150); /* Hijau mineral */
+    --color-warning: oklch(80% 0.16 80); /* Kuning peringatan */
+    --color-error: oklch(65% 0.18 25); /* Merah tanah */
+
+    /* Global UI Style */
+    --radius-selector: 0.5rem; /* Sedikit membulat agar modern */
+    --radius-field: 0.375rem;
+    --radius-box: 0.75rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1; /* Memberikan sedikit efek dimensi */
+    --noise: 0.05; /* Sedikit tekstur agar terasa seperti material tambang */
+    --noise-url: url("/noise.svg");
+}
+@plugin "daisyui/theme" {
+    name: "goldore-light";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+
+    /* Background & Surface - Warna Pasir & Debu Mineral */
+    --color-base-100: oklch(97% 0.015 80); /* Background utama (Cream/Sand) */
+    --color-base-200: oklch(94% 0.03 80); /* Sidebar (Beige lembut) */
+    --color-base-300: oklch(89% 0.05 80); /* Hover/Input state */
+    --color-base-content: oklch(
+        25% 0.02 60
+    ); /* Teks utama (Cokelat gelap/Arang) */
+
+    /* Primary - Emas Batangan (Solid Gold) */
+    --color-primary: oklch(
+        75% 0.16 85
+    ); /* Emas yang lebih pekat untuk light mode */
+    --color-primary-content: oklch(20% 0.05 85); /* Teks gelap di atas emas */
+
+    /* Secondary - Batuan Sedimen (Earth Brown) */
+    --color-secondary: oklch(50% 0.08 60);
+    --color-secondary-content: oklch(98% 0.01 60);
+
+    /* Accent - Tembaga Teroksidasi (Copper/Rust) */
+    --color-accent: oklch(60% 0.14 45);
+    --color-accent-content: oklch(98% 0.01 45);
+
+    /* Neutral - Logam Alat Berat (Steel Gray) */
+    --color-neutral: oklch(35% 0.03 260);
+    --color-neutral-content: oklch(95% 0.01 260);
+
+    /* Status Colors - Lebih berani untuk latar terang */
+    --color-info: oklch(65% 0.12 240); /* Biru mineral */
+    --color-success: oklch(62% 0.15 160); /* Hijau zamrud mentah */
+    --color-warning: oklch(78% 0.18 85); /* Kuning safety */
+    --color-error: oklch(55% 0.2 25); /* Merah tanah liat */
+
+    /* Global UI Style */
+    --radius-selector: 0.25rem;
+    --radius-field: 0.125rem;
+    --radius-box: 0.375rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 0.5;
+    --noise: 0.02;
+    --noise-url: url("/noise.svg");
+}
+
+@plugin "daisyui/theme" {
+    name: "sentry-interlock";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(96% 0.007 247.896);
+    --color-base-200: oklch(92% 0.013 255.508);
+    --color-base-300: oklch(86% 0.022 252.894);
+    --color-base-content: oklch(21% 0.006 56.043);
+    --color-primary: oklch(60% 0.118 184.704);
+    --color-primary-content: oklch(26% 0.051 172.552);
+    --color-secondary: oklch(64% 0.222 41.116);
+    --color-secondary-content: oklch(92% 0 0);
+    --color-accent: oklch(44% 0.11 240.79);
+    --color-accent-content: oklch(97% 0.014 254.604);
+    --color-neutral: oklch(44% 0.03 256.802);
+    --color-neutral-content: oklch(98% 0.001 106.423);
+    --color-info: oklch(58% 0.158 241.966);
+    --color-info-content: oklch(30% 0.056 229.695);
+    --color-success: oklch(79% 0.209 151.711);
+    --color-success-content: oklch(26% 0.065 152.934);
+    --color-warning: oklch(75% 0.183 55.934);
+    --color-warning-content: oklch(26% 0.079 36.259);
+    --color-error: oklch(58% 0.253 17.585);
+    --color-error-content: oklch(94% 0.03 12.58);
+    --radius-selector: 0.25rem;
+    --radius-field: 0.5rem;
+    --radius-box: 0.25rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.21875rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 1;
+    --noise-url: url("/noise.svg");
+}
+
+@plugin "daisyui/theme" {
+    name: "tokasafe";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(98% 0.002 247.839);
+    --color-base-200: oklch(96% 0.003 264.542);
+    --color-base-300: oklch(92% 0.006 264.531);
+    --color-base-content: oklch(21% 0.034 264.665);
+    --color-primary: oklch(67% 0.182 276.935);
+    --color-primary-content: oklch(25% 0.09 281.288);
+
+    --color-accent: oklch(70% 0.04 256.788);
+    --color-accent-content: oklch(12% 0.042 264.695);
+    --color-neutral: oklch(13% 0.028 261.692);
+    --color-neutral-content: oklch(98% 0.002 247.839);
+    --color-info: oklch(70% 0.165 254.624);
+    --color-info-content: oklch(28% 0.091 267.935);
+    --color-success: oklch(79% 0.209 151.711);
+    --color-success-content: oklch(26% 0.065 152.934);
+    --color-warning: oklch(82% 0.189 84.429);
+    --color-warning-content: oklch(27% 0.077 45.635);
+    --color-secondary: oklch(64% 0.222 41.116);
+    --color-secondary-content: oklch(28% 0.066 53.813);
+    --color-error: oklch(70% 0.191 22.216);
+    --color-error-content: oklch(25% 0.092 26.042);
+    --radius-selector: 0rem;
+    --radius-field: 0rem;
+    --radius-box: 0.5rem;
+    --size-selector: 0.21875rem;
+    --size-field: 0.25rem;
+    --border: 1.5px;
+    --depth: 1;
+    --noise: 1;
+    --noise-url: url("/noise.svg");
+}
+
+@plugin "daisyui/theme" {
+    name: "swimmingvoid";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(98% 0 0);
+    --color-base-200: oklch(97% 0 0);
+    --color-base-300: oklch(92% 0 0);
+    --color-base-content: oklch(20% 0 0);
+    --color-primary: oklch(68% 0.169 237.323);
+    --color-primary-content: oklch(97% 0.013 236.62);
+    --color-secondary: oklch(76% 0.188 70.08);
+    --color-secondary-content: oklch(98% 0.022 95.277);
+    --color-accent: oklch(60% 0.25 292.717);
+    --color-accent-content: oklch(96% 0.016 293.756);
+    --color-neutral: oklch(14% 0 0);
+    --color-neutral-content: oklch(98% 0 0);
+    --color-info: oklch(78% 0.154 211.53);
+    --color-info-content: oklch(30% 0.056 229.695);
+    --color-success: oklch(77% 0.152 181.912);
+    --color-success-content: oklch(27% 0.046 192.524);
+    --color-warning: oklch(79% 0.184 86.047);
+    --color-warning-content: oklch(28% 0.066 53.813);
+    --color-error: oklch(58% 0.253 17.585);
+    --color-error-content: oklch(96% 0.015 12.422);
+    --radius-selector: 0.25rem;
+    --radius-field: 0.25rem;
+    --radius-box: 0.25rem;
+    --size-selector: 0.21875rem;
+    --size-field: 0.25rem;
+    --border: 2px;
+    --depth: 1;
+    --noise: 1;
+    --noise-url: url("/noise.svg");
+}
+
+@plugin "daisyui/theme" {
+    name: "badzombie";
+    default: false;
+    prefersdark: false;
+    color-scheme: "light";
+    --color-base-100: oklch(97% 0.013 236.62);
+    --color-base-200: oklch(95% 0.026 236.824);
+    --color-base-300: oklch(90% 0.058 230.902);
+    --color-base-content: oklch(39% 0.09 240.876);
+    --color-primary: oklch(66% 0.179 58.318);
+    --color-primary-content: oklch(98% 0.022 95.277);
+    --color-secondary: oklch(60% 0.118 184.704);
+    --color-secondary-content: oklch(98% 0.014 180.72);
+    --color-accent: oklch(58% 0.158 241.966);
+    --color-accent-content: oklch(97% 0.013 236.62);
+    --color-neutral: oklch(50% 0.134 242.749);
+    --color-neutral-content: oklch(97% 0.013 236.62);
+    --color-info: oklch(78% 0.154 211.53);
+    --color-info-content: oklch(30% 0.056 229.695);
+    --color-success: oklch(84% 0.238 128.85);
+    --color-success-content: oklch(27% 0.072 132.109);
+    --color-warning: oklch(75% 0.183 55.934);
+    --color-warning-content: oklch(26% 0.079 36.259);
+    --color-error: oklch(70% 0.191 22.216);
+    --color-error-content: oklch(25% 0.092 26.042);
+    --radius-selector: 0.25rem;
+    --radius-field: 0rem;
+    --radius-box: 0rem;
+    --size-selector: 0.25rem;
+    --size-field: 0.25rem;
+    --border: 1px;
+    --depth: 1;
+    --noise: 1;
+}
+
+@plugin "daisyui" {
+    themes:
+        fancytide, mysteryriver, corporate, cookedzombie, vibebutnew, goldmine,
+        goldore-light, sentry-interlock, tokasafe, swimmingvoid, badzombie;
+}
+
+/* --- 4. TAILWIND THEME & VARIANTS --- */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: "Instrument Sans", ui-sans-serif, system-ui, sans-serif;
+    --color-zinc-50: #fafafa;
+    --color-zinc-100: #f5f5f5;
+    --color-zinc-200: #e5e5e5;
+    --color-zinc-300: #d4d4d4;
+    --color-zinc-400: #a3a3a3;
+    --color-zinc-500: #737373;
+    --color-zinc-600: #525252;
+    --color-zinc-700: #404040;
+    --color-zinc-800: #262626;
+    --color-zinc-900: #171717;
+    --color-zinc-950: #0a0a0a;
+
+    --color-accent: var(--color-neutral-800);
+    --color-accent-content: var(--color-neutral-800);
+    --color-accent-foreground: var(--color-white);
+}
+
+@layer theme {
+    .dark {
+        --color-accent: var(--color-white);
+        --color-accent-content: var(--color-white);
+        --color-accent-foreground: var(--color-neutral-200);
+    }
+}
+
+/* --- 5. BASE STYLES --- */
+@layer base {
+    *,
+    ::after,
+    ::before,
+    ::backdrop,
+    ::file-selector-button {
+        border-color: var(--color-gray-200, currentColor);
+    }
+
+    .modal-box,
+    dialog.modal {
+        overflow: visible !important;
+    }
+
+    .flatpickr-calendar {
+        z-index: 99999 !important;
+    }
+    .flatpickr-wrapper {
+        display: block !important;
+        width: 100% !important;
+    }
+
+    .ck-content ul {
+        @apply list-disc pl-6;
+    }
+    .ck-content ol {
+        @apply list-decimal pl-6;
+    }
+}
+
+/* --- 6. FORM & FLUX UI --- */
+[data-flux-field]:not(ui-radio, ui-checkbox) {
+    @apply grid gap-2;
+}
+[data-flux-label] {
+    @apply !mb-0 !leading-tight;
+}
+
+input:focus[data-flux-control],
+textarea:focus[data-flux-control],
+select:focus[data-flux-control] {
+    @apply outline-hidden ring-2 ring-accent ring-offset-2 ring-offset-accent-foreground;
+}
+
+/* --- 7. UTILITIES & CUSTOM CLASSES --- */
+@layer utilities {
+    .bg-from-db-red {
+        @apply bg-red-600;
+    }
+    .bg-from-db-yellow {
+        @apply bg-yellow-400;
+    }
+    .bg-from-db-green {
+        @apply bg-green-500;
+    }
+    .bg-noise {
+        background-image: url("/noise.svg");
+    }
+}
+
+.rotate_text {
+    writing-mode: vertical-lr;
+    transform: rotate(-180deg);
+}
+
+.table .btn.btn-square.btn-xs {
+    padding: 2.5px !important;
+    min-height: auto !important;
+    height: 100% !important;
+    width: 100% !important;
+    border-radius: 10px !important;
+}
+
+/* --- 8. CKEDITOR THEME & SYNC --- */
+:root {
+    --ck-color-base-background: var(--color-base-100);
+    --ck-color-base-border: var(--color-base-300);
+    --ck-color-text: var(--color-base-content);
+    --ck-color-toolbar-background: var(--color-base-200);
+    --ck-color-toolbar-border: var(--color-base-300);
+    --noise: url("/noise.svg") !important;
+}
+
+.ck-editor {
+    width: 100% !important;
+}
+
+.ck.ck-editor__main > .ck-editor__editable {
+    background: var(--color-base-100) !important;
+    color: var(--color-base-content) !important;
+    border-color: var(--color-base-300) !important;
+    min-height: 150px;
+    max-height: 400px;
+    padding: 1rem;
+    box-sizing: border-box;
+    border-radius: 0 0 0.5rem 0.5rem !important;
+}
+
+/* State error khusus */
+.ck-editor__editable.error {
+    border: 1.5px solid var(--color-error) !important;
+    /* Memberikan efek bayangan merah halus agar identik dengan input DaisyUI saat error */
+    box-shadow: 0 0 0 1px var(--color-error) !important;
+}
+
+/* Memastikan transisi warna border halus */
+.ck.ck-editor__main > .ck-editor__editable {
+    transition:
+        border-color 0.2s,
+        box-shadow 0.2s;
+}
+
+.ck.ck-toolbar {
+    border: none !important;
+    background: var(--color-base-200) !important;
+    border-color: var(--color-base-300) !important;
+    border-radius: 0.5rem 0.5rem 0 0 !important;
+}
+
+.ck.ck-toolbar .ck-button {
+    color: var(--color-base-content) !important;
+}
+.ck.ck-toolbar .ck-button:hover,
+.ck.ck-toolbar .ck-button.ck-on {
+    background: var(--color-base-300) !important;
+}
+.ck.ck-icon {
+    color: var(--color-base-content) !important;
+}
+
+.ck.ck-reset_all,
+.ck.ck-reset_all * {
+    color: var(--color-base-content) !important;
+}
+.ck.ck-list,
+.ck.ck-balloon-panel {
+    background: var(--color-base-100) !important;
+    border-color: var(--color-base-300) !important;
+}
+.ck.ck-sticky-panel .ck-sticky-panel__content_sticky {
+    position: static !important;
+    top: auto !important;
+    box-shadow: none !important;
+}
+
+/* Memastikan wrapper CKEditor mengikuti alur kolom standar */
+.ck.ck-editor {
+    display: flex !important;
+    flex-direction: column !important;
+}

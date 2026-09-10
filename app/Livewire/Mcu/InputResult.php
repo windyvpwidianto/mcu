@@ -33,8 +33,8 @@ class InputResult extends Component
     {
         $this->validate();
 
-        // Upload File
-        $path = $this->result_document->store('mcu_results', 'public');
+        // Upload File ke disk 'local' (private) agar aman
+        $path = $this->result_document->store('mcu_results', 'local');
 
         // Simpan ke database dengan status langsung 'pending_review' (Sesuai flowchart)
         McuResult::create([

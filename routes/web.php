@@ -138,6 +138,19 @@ Route::middleware(['role:administrator,medical staff'])->group(function () {
     Route::get('mcu/list', McuResultList::class)->name('mcu.list');
     Route::get('mcu/dashboard', McuDashboard::class)->name('mcu.dashboard');
     Route::get('mcu/fit-letter/{id}', [\App\Http\Controllers\McuController::class, 'printFitLetter'])->name('mcu.fit-letter');
+
+    // Route untuk melihat dokumen MCU (Secure)
+    Route::get('/mcu/document/{path}', function ($path) {
+        try {
+            $decryptedPath = Crypt::decryptString($path);
+            if (!Storage::disk('local')->exists($decryptedPath)) {
+                abort(404, 'Dokumen tidak ditemukan.');
+            }
+            return Storage::disk('local')->response($decryptedPath);
+        } catch (DecryptException $e) {
+            abort(403, 'Akses ditolak: Link tidak valid.');
+        }
+    })->name('mcu.document.secure-view');
 });
 Route::middleware(['role:administrator,moderator'])->group(function () {
      Route::get('event_general/ErmAssignmentManager', ErmAssignmentManager::class)->name('event_general-ErmAssignmentManager');

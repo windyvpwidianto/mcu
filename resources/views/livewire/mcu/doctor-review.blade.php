@@ -24,7 +24,7 @@
                             <td class="font-bold">{{ $result->participant->employee->name }}</td>
                             <td>{{ $result->participant->schedule->schedule_date->format('d M Y') }}</td>
                             <td>
-                                <a href="{{ Storage::url($result->result_document) }}" target="_blank" class="btn btn-sm btn-outline btn-info">Lihat Dokumen</a>
+                                <a href="{{ route('mcu.document.secure-view', \Illuminate\Support\Facades\Crypt::encryptString($result->result_document)) }}" target="_blank" class="btn btn-sm btn-outline btn-info">Lihat Dokumen</a>
                             </td>
                             <td>
                                 <button wire:click="openReviewModal({{ $result->id }})" class="btn btn-sm btn-primary">Review Sekarang</button>

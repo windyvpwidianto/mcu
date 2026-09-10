@@ -141,21 +141,12 @@ class MenuSeeder extends Seeder
         ]);
         SubMenu::create([
             'menu_id'       => $menuMcu->id,
-            'menu'          => 'MCU List',
-            'icon'          => 'table-cells',
-            'route'         => 'mcu.list',
-            'request_route' => 'mcu/list*',
-            'status'        => 'enabled',
-            'urutan'        => 2,
-        ]);
-        SubMenu::create([
-            'menu_id'       => $menuMcu->id,
             'menu'          => 'Generate Schedule',
             'icon'          => 'calendar',
             'route'         => 'mcu.generate',
             'request_route' => 'mcu/generate*',
             'status'        => 'enabled',
-            'urutan'        => 3,
+            'urutan'        => 2,
         ]);
         SubMenu::create([
             'menu_id'       => $menuMcu->id,
@@ -164,7 +155,7 @@ class MenuSeeder extends Seeder
             'route'         => 'mcu.input-result',
             'request_route' => 'mcu/input-result*',
             'status'        => 'enabled',
-            'urutan'        => 4,
+            'urutan'        => 3,
         ]);
         SubMenu::create([
             'menu_id'       => $menuMcu->id,
@@ -172,6 +163,15 @@ class MenuSeeder extends Seeder
             'icon'          => 'check-badge',
             'route'         => 'mcu.doctor-review',
             'request_route' => 'mcu/doctor-review*',
+            'status'        => 'enabled',
+            'urutan'        => 4,
+        ]);
+        SubMenu::create([
+            'menu_id'       => $menuMcu->id,
+            'menu'          => 'MCU Result',
+            'icon'          => 'table-cells',
+            'route'         => 'mcu.list',
+            'request_route' => 'mcu/list*',
             'status'        => 'enabled',
             'urutan'        => 5,
         ]);

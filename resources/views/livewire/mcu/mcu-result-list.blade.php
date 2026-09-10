@@ -41,10 +41,19 @@
                         </span>
                         @endif
                     </td>
-                    <td class="px-4 py-3">
+                    <td class="px-4 py-3 flex gap-2 items-center">
                         <button wire:click="openReviewModal({{ $result->id }})" class="text-indigo-600 hover:text-indigo-900 font-semibold">
                             Lihat Detail
                         </button>
+
+                        @if($result->workflow_status === 'reviewed' && in_array($result->status, ['fit_to_work', 'fit_with_notes']))
+                            <a href="{{ route('mcu.fit-letter', $result->id) }}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-semibold flex items-center gap-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                </svg>
+                                Cetak Surat FIT
+                            </a>
+                        @endif
                     </td>
                 </tr>
                 @empty

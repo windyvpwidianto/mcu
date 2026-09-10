@@ -137,6 +137,7 @@ Route::middleware(['role:administrator,medical staff'])->group(function () {
     Route::get('mcu/doctor-review', DoctorReview::class)->name('mcu.doctor-review');
     Route::get('mcu/list', McuResultList::class)->name('mcu.list');
     Route::get('mcu/dashboard', McuDashboard::class)->name('mcu.dashboard');
+    Route::get('mcu/fit-letter/{id}', [\App\Http\Controllers\McuController::class, 'printFitLetter'])->name('mcu.fit-letter');
 });
 Route::middleware(['role:administrator,moderator'])->group(function () {
      Route::get('event_general/ErmAssignmentManager', ErmAssignmentManager::class)->name('event_general-ErmAssignmentManager');

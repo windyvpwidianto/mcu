@@ -52,10 +52,11 @@ class McuDashboard extends Component
         // --- 2. TAMBAHAN BARU: DATA TOP PENYAKIT ---
         // Mengambil 10 penyakit terbanyak yang memiliki relasi ke mcu_results
         $topDiseases = DiseaseCategory::withCount('mcuResults')
-            ->having('mcu_results_count', '>', 0) // Hanya ambil yang ada kasusnya
-            ->orderBy('mcu_results_count', 'asc') // di-asc agar grafik horisontal urut dari terbesar di atas
+            ->has('mcuResults') // Hanya ambil yang ada kasusnya
+            ->orderBy('mcu_results_count', 'desc') // Ambil 10 terbanyak
             ->limit(10)
-            ->get();
+            ->get()
+            ->sortBy('mcu_results_count'); // di-asc agar grafik horisontal urut dari terbesar di atas
 
         $diseaseNames  = $topDiseases->pluck('name')->toArray();
         $diseaseCounts = $topDiseases->pluck('mcu_results_count')->toArray();

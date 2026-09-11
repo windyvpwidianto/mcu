@@ -95,6 +95,25 @@ class DoctorReview extends Component
             // Sync menggunakan ID yang sudah bersih dari string non-numeric
             $result->diseaseCategories()->sync($validIds);
 
+            // LOGIC RIWAYAT & UPDATE JADWAL MCU (+1 Tahun)
+            if ($result->mcu_master_data_id) {
+                $master = \App\Models\McuMasterData::find($result->mcu_master_data_id);
+                if ($master) {
+                    // 1. Simpan ke riwayat
+                    $master->histories()->create([
+                        'historical_date' => $master->mcu_date ?? now(),
+                        'notes'           => 'Hasil MCU (' . str_replace('_', ' ', $this->fit_status) . ') telah direview oleh dokter.'
+                    ]);
+
+                    // 2. Update target jadwal untuk tahun depan
+                    $newTargetDate = \Carbon\Carbon::parse($master->mcu_date ?? now())->addYear();
+                    $master->update([
+                        'mcu_date'            => $newTargetDate,
+                        'notification_status' => 'pending'
+                    ]);
+                }
+            }
+
             // ... (KODE NOTIFIKASI DAN RESET FORM ANDA DI BAWAHNYA TETAP SAMA) ...
             $employeeUser = $result->participant?->employee;
             $deptHeadUser = $result->participant?->deptHead;

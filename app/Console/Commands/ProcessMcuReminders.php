@@ -17,12 +17,13 @@ class ProcessMcuReminders extends Command
     {
         $today = Carbon::today();
 
-        // 1. Rollover otomatis: Jika mcu_date sudah lewat, tambah 1 tahun dan reset status
-        $pastMcus = McuMasterData::whereNotNull('mcu_date')->whereDate('mcu_date', '<', $today)->get();
+        // 1. Cek jika mcu_date sudah lewat, kita bisa set status menjadi 'overdue' jika diperlukan
+        // Namun sesuai rencana, tidak ada lagi auto-rollover otomatis.
+        $pastMcus = McuMasterData::whereNotNull('mcu_date')->whereDate('mcu_date', '<', $today)
+            ->where('notification_status', '!=', 'overdue')->get();
         foreach ($pastMcus as $mcu) {
             $mcu->update([
-                'mcu_date' => Carbon::parse($mcu->mcu_date)->addYear(),
-                'notification_status' => 'pending'
+                'notification_status' => 'overdue'
             ]);
         }
 

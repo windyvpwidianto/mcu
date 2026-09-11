@@ -28,7 +28,7 @@
                     <th class="px-4 py-3 border-b font-semibold">Nama Karyawan</th>
                     <th class="px-4 py-3 border-b font-semibold">Perusahaan / Posisi</th>
                     <th class="px-4 py-3 border-b font-semibold">No. WhatsApp</th>
-                    <th class="px-4 py-3 border-b font-semibold">Jadwal MCU</th>
+                    <th class="px-4 py-3 border-b font-semibold">Target MCU Berikutnya</th>
                     <th class="px-4 py-3 border-b font-semibold text-center w-24">Aksi</th>
                 </tr>
             </thead>
@@ -53,12 +53,17 @@
                     </td>
                     <td class="px-4 py-3 text-center">
                         <div class="flex justify-center gap-1">
-                            <button wire:click="edit({{ $data->id }})" class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors">
+                            <button wire:click="openHistory({{ $data->id }})" class="btn btn-sm btn-ghost text-emerald-600 hover:bg-emerald-50 hover:text-emerald-800 transition-colors" title="Riwayat MCU">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <button wire:click="edit({{ $data->id }})" class="btn btn-sm btn-ghost text-blue-600 hover:bg-blue-100 hover:text-blue-800 transition-colors" title="Edit Data">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                             </button>
-                            <button wire:click="delete({{ $data->id }})" onclick="confirm('Apakah Anda yakin ingin menghapus data master MCU untuk {{ $data->employee_name }}?') || event.stopImmediatePropagation()" class="btn btn-sm btn-ghost text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors">
+                            <button wire:click="delete({{ $data->id }})" onclick="confirm('Apakah Anda yakin ingin menghapus data master MCU untuk {{ $data->employee_name }}?') || event.stopImmediatePropagation()" class="btn btn-sm btn-ghost text-red-500 hover:bg-red-50 hover:text-red-700 transition-colors" title="Hapus Data">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                 </svg>
@@ -113,7 +118,7 @@
                     </div>
 
                     <div class="form-control">
-                        <label class="label font-medium pb-1"><span class="label-text text-gray-700">NIK <span class="text-red-500">*</span></span></label>
+                        <label class="label font-medium pb-1"><span class="label-text text-gray-700">ID Badge <span class="text-red-500">*</span></span></label>
                         <input type="text" wire:model="nik" class="input input-bordered w-full focus:border-primary focus:ring-1 focus:ring-primary transition-all @error('nik') input-error @enderror" placeholder="Cth: 12345678" />
                         @error('nik') <span class="text-red-500 text-xs mt-1 font-medium">{{ $message }}</span> @enderror
                     </div>
@@ -172,6 +177,76 @@
             </div>
         </div>
         <div class="modal-backdrop bg-gray-900/40 backdrop-blur-sm" wire:click="closeModal">
+            <button class="cursor-default">close</button>
+        </div>
+    </div>
+
+    <!-- Modal Riwayat MCU -->
+    <div class="modal {{ $showHistoryModal ? 'modal-open' : '' }}" role="dialog">
+        <div class="modal-box w-11/12 max-w-2xl bg-white shadow-2xl rounded-2xl border border-gray-100">
+            <button wire:click="closeHistoryModal" class="btn btn-sm btn-circle btn-ghost absolute right-4 top-4 hover:bg-gray-100">✕</button>
+            
+            <h3 class="font-bold text-xl mb-6 text-gray-800 border-b pb-4 flex items-center gap-2">
+                <span class="bg-emerald-100 text-emerald-600 p-2 rounded-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </span>
+                Riwayat MCU: {{ $employeeHistoryName }}
+            </h3>
+
+            <!-- Form Tambah Riwayat Manual -->
+            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200 mb-6">
+                <h4 class="font-semibold text-gray-700 mb-3 text-sm">Tambah Riwayat Manual (Masa Lalu)</h4>
+                <div class="flex flex-col md:flex-row gap-3 items-end">
+                    <div class="form-control w-full">
+                        <label class="label p-0 pb-1 text-xs font-medium text-gray-600">Tanggal Pelaksanaan <span class="text-red-500">*</span></label>
+                        <input type="date" wire:model="new_history_date" class="input input-sm input-bordered w-full" />
+                    </div>
+                    <div class="form-control w-full">
+                        <label class="label p-0 pb-1 text-xs font-medium text-gray-600">Catatan Tambahan</label>
+                        <input type="text" wire:model="new_history_notes" class="input input-sm input-bordered w-full" placeholder="Cth: Hasil Fit to Work" />
+                    </div>
+                    <button wire:click="addHistory" class="btn btn-sm btn-primary shrink-0 px-4">Tambahkan</button>
+                </div>
+                @error('new_history_date') <span class="text-red-500 text-xs mt-1">{{ $message }}</span> @enderror
+            </div>
+
+            <!-- List Riwayat -->
+            <div class="overflow-y-auto max-h-64 pr-2">
+                @if(count($histories) > 0)
+                    <div class="relative border-l-2 border-emerald-200 ml-3 space-y-6">
+                        @foreach($histories as $history)
+                        <div class="relative pl-6">
+                            <div class="absolute -left-1.5 top-1.5 w-3 h-3 bg-emerald-500 rounded-full border-2 border-white"></div>
+                            <div class="bg-white p-3 rounded-lg border border-gray-100 shadow-sm flex justify-between items-start">
+                                <div>
+                                    <div class="font-bold text-gray-800">{{ $history->historical_date->format('d M Y') }}</div>
+                                    @if($history->notes)
+                                        <div class="text-sm text-gray-500 mt-1">{{ $history->notes }}</div>
+                                    @endif
+                                </div>
+                                <button wire:click="deleteHistory({{ $history->id }})" onclick="confirm('Hapus riwayat tanggal {{ $history->historical_date->format('d M Y') }}?') || event.stopImmediatePropagation()" class="text-red-500 hover:text-red-700 p-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-6 text-gray-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <p>Belum ada catatan riwayat MCU untuk karyawan ini.</p>
+                    </div>
+                @endif
+            </div>
+            
+        </div>
+        <div class="modal-backdrop bg-gray-900/40 backdrop-blur-sm" wire:click="closeHistoryModal">
             <button class="cursor-default">close</button>
         </div>
     </div>

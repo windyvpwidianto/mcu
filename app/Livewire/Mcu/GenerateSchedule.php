@@ -25,6 +25,14 @@ class GenerateSchedule extends Component
     public $hp_number;
     public $mcu_date;
 
+    // History fields
+    public $showHistoryModal = false;
+    public $historyMasterId = null;
+    public $employeeHistoryName = '';
+    public $histories = [];
+    public $new_history_date;
+    public $new_history_notes;
+
     public function rules()
     {
         return [
@@ -117,6 +125,58 @@ class GenerateSchedule extends Component
             'close'           => true,
             'backgroundColor' => "linear-gradient(to right, #ef4444, #f87171)",
         ]);
+    }
+
+    public function openHistory($masterId)
+    {
+        $this->historyMasterId = $masterId;
+        $master = McuMasterData::with('histories')->find($masterId);
+        if ($master) {
+            $this->employeeHistoryName = $master->employee_name;
+            $this->histories = $master->histories;
+            $this->showHistoryModal = true;
+        }
+    }
+
+    public function closeHistoryModal()
+    {
+        $this->showHistoryModal = false;
+        $this->reset(['historyMasterId', 'employeeHistoryName', 'histories', 'new_history_date', 'new_history_notes']);
+    }
+
+    public function addHistory()
+    {
+        $this->validate([
+            'new_history_date' => 'required|date',
+            'new_history_notes' => 'nullable|string|max:255'
+        ]);
+
+        $master = McuMasterData::find($this->historyMasterId);
+        if ($master) {
+            $master->histories()->create([
+                'historical_date' => $this->new_history_date,
+                'notes' => $this->new_history_notes
+            ]);
+            
+            $this->histories = $master->histories()->get();
+            $this->reset(['new_history_date', 'new_history_notes']);
+            
+            $this->dispatch('alert', [
+                'text' => 'Riwayat berhasil ditambahkan!',
+                'duration' => 3000,
+                'close' => true,
+                'backgroundColor' => "linear-gradient(to right, #06b6d4, #22c55e)",
+            ]);
+        }
+    }
+    
+    public function deleteHistory($historyId)
+    {
+        \App\Models\McuHistory::find($historyId)?->delete();
+        $master = McuMasterData::find($this->historyMasterId);
+        if ($master) {
+            $this->histories = $master->histories()->get();
+        }
     }
 
     public function paginationView()

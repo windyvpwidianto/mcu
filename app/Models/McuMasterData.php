@@ -27,4 +27,9 @@ class McuMasterData extends Model
         'birth_date' => 'date',
         'mcu_date' => 'date',
     ];
+
+    public function histories()
+    {
+        return $this->hasMany(McuHistory::class, 'mcu_master_data_id')->orderBy('historical_date', 'desc');
+    }
 }

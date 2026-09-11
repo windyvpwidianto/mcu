@@ -19,6 +19,11 @@ class McuResult extends Model
     {
         return $this->belongsTo(McuParticipant::class, 'mcu_participant_id');
     }
+
+    public function masterData(): BelongsTo
+    {
+        return $this->belongsTo(McuMasterData::class, 'mcu_master_data_id');
+    }
     // Tambahkan di dalam class McuResult
     public function diseaseCategories(): BelongsToMany
     {

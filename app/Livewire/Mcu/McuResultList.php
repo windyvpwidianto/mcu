@@ -24,7 +24,8 @@ class McuResultList extends Component
     {
         $mcuResults = McuResult::with([
             'participant.employee',
-            'participant.schedule'
+            'participant.schedule',
+            'masterData'
         ])
             ->whereIn('workflow_status', ['pending_doctor', 'reviewed'])
             ->orderBy('created_at', 'desc')
@@ -54,7 +55,7 @@ class McuResultList extends Component
                 : null;
 
             // Ambil nama karyawan untuk keperluan UI Modal
-            $this->employeeName = $result->participant->employee->name ?? 'Tidak diketahui';
+            $this->employeeName = $result->masterData?->employee_name ?? $result->participant?->employee?->name ?? 'Tidak diketahui';
 
             // 4. Buka modal
             $this->showReviewModal = true;

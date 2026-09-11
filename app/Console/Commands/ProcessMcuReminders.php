@@ -3,63 +3,62 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Models\McuParticipant;
+use App\Models\McuMasterData;
 use App\Notifications\McuReminderNotification;
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 
 class ProcessMcuReminders extends Command
 {
     protected $signature = 'mcu:process-reminders';
-    protected $description = 'Proses notifikasi h-30, h-14, h-7, h-1 untuk MCU';
+    protected $description = 'Proses notifikasi H-2 bulan, H-1 bulan, H-1 minggu untuk MCU tahunan';
 
     public function handle()
     {
-        // 1. Peta eskalasi aturan reminder dengan rentang hari untuk mencegah rantai terputus jika cron mati 1 hari
+        $today = Carbon::today();
+
+        // 1. Rollover otomatis: Jika mcu_date sudah lewat, tambah 1 tahun dan reset status
+        $pastMcus = McuMasterData::whereNotNull('mcu_date')->whereDate('mcu_date', '<', $today)->get();
+        foreach ($pastMcus as $mcu) {
+            $mcu->update([
+                'mcu_date' => Carbon::parse($mcu->mcu_date)->addYear(),
+                'notification_status' => 'pending'
+            ]);
+        }
+
+        // 2. Peta eskalasi aturan reminder
         $reminders = [
-            'h-30' => [
-                'type' => 'h-30', 
+            'h-2_bulan' => [
+                'type' => 'h-2_bulan', 
                 'statuses' => ['pending'], 
+                'max_days' => 60, 
+                'min_days' => 31,
+                'next' => 'h-2_bulan'
+            ],
+            'h-1_bulan' => [
+                'type' => 'h-1_bulan', 
+                'statuses' => ['pending', 'h-2_bulan'], 
                 'max_days' => 30, 
-                'min_days' => 15,
-                'next' => 'notified'
-            ],
-            'h-14' => [
-                'type' => 'h-14', 
-                'statuses' => ['pending', 'notified'], 
-                'max_days' => 14, 
                 'min_days' => 8,
-                'next' => 'reminder_1'
+                'next' => 'h-1_bulan'
             ],
-            'h-7' => [
-                'type' => 'h-7', 
-                'statuses' => ['pending', 'notified', 'reminder_1'], 
+            'h-1_minggu' => [
+                'type' => 'h-1_minggu', 
+                'statuses' => ['pending', 'h-2_bulan', 'h-1_bulan'], 
                 'max_days' => 7, 
-                'min_days' => 2,
-                'next' => 'reminder_2'
-            ],
-            'h-1' => [
-                'type' => 'h-1', 
-                'statuses' => ['pending', 'notified', 'reminder_1', 'reminder_2'], 
-                'max_days' => 1, 
                 'min_days' => 1,
-                'next' => 'final_reminder'
+                'next' => 'h-1_minggu'
             ],
         ];
-
-        $today = Carbon::today();
 
         foreach ($reminders as $config) {
             $maxDate = (clone $today)->addDays($config['max_days'])->toDateString();
             $minDate = (clone $today)->addDays($config['min_days'])->toDateString();
 
-            // 2. Filter menggunakan rentang (>= min_days dan <= max_days)
-            McuParticipant::with(['schedule', 'employee', 'supervisor', 'deptHead'])
-                ->whereIn('notification_status', $config['statuses'])
-                ->whereHas('schedule', function ($q) use ($minDate, $maxDate) {
-                    $q->whereDate('schedule_date', '>=', $minDate)
-                      ->whereDate('schedule_date', '<=', $maxDate);
-                })
+            McuMasterData::whereIn('notification_status', $config['statuses'])
+                ->whereNotNull('mcu_date')
+                ->whereDate('mcu_date', '>=', $minDate)
+                ->whereDate('mcu_date', '<=', $maxDate)
                 ->chunkById(100, function ($participants) use ($config) {
                     foreach ($participants as $participant) {
                         $this->sendNotifications($participant, $config['type'], $config['next']);
@@ -67,58 +66,17 @@ class ProcessMcuReminders extends Command
                 });
         }
 
-        $this->info('Proses reminder MCU berhasil dijalankan.');
+        $this->info('Proses reminder MCU tahunan berhasil dijalankan.');
     }
 
-    // 2. Ubah pemanggilan variabel di dalam sendNotifications():
-    private function sendNotifications(McuParticipant $participant, string $type, string $nextStatus)
+    private function sendNotifications(McuMasterData $participant, string $type, string $nextStatus)
     {
-        $employee = $participant->employee;
-
-        // AMBIL LANGSUNG DARI PARTICIPANT SESAAT SETELAH DI-EAGER LOAD
-        $supervisor = $participant->supervisor;
-
-        // Jika kolom dept_head_id ada di tabel, gunakan $participant->deptHead
-        // Jika tidak, fallback ke relasi departemen karyawan
-        $departmentHead = $participant->deptHead ?? $employee?->department?->head;
-
-        $recipients = collect([
-            ['user' => $employee, 'role' => 'employee'],
-        ]);
-
-        if (in_array($type, ['h-30', 'h-14', 'h-7', 'h-1']) && $departmentHead) {
-            $recipients->push(['user' => $departmentHead, 'role' => 'dept_head']);
-        }
-
-        if (in_array($type, ['h-7', 'h-1']) && $supervisor) {
-            $recipients->push(['user' => $supervisor, 'role' => 'supervisor']);
-        }
-
-        // Filter null & pastikan setiap user ID hanya dikirim 1 kali dengan role tertinggi
-        $validRecipients = $recipients->filter(fn($item) => !is_null($item['user']))
-                                      ->unique(fn($item) => $item['user']->id);
-
-        foreach ($validRecipients as $recipient) {
-            $user = $recipient['user'];
-            $role = $recipient['role'];
-            
-            // Dept Head hanya menerima Email, Karyawan dan SPV menerima Email & WA
-            if ($role === 'dept_head') {
-                try {
-                    $user->notify(new McuReminderNotification($participant, $type, ['mail']));
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('MCU Reminder Command Email Error (Dept Head): ' . $e->getMessage());
-                }
-            } else {
-                // Kirim WhatsApp langsung tanpa masuk antrean
-                $user->notifyNow(new McuReminderNotification($participant, $type, [\App\Channels\WhatsAppChannel::class]));
-                
-                // Kirim Email dengan try-catch agar error SMTP tidak membuat proses crash
-                try {
-                    $user->notify(new McuReminderNotification($participant, $type, ['mail']));
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error("MCU Reminder Command Email Error ({$role}): " . $e->getMessage());
-                }
+        // Karyawan menerima WhatsApp (karena tidak ada email di McuMasterData)
+        if (!empty($participant->hp_number)) {
+            try {
+                $participant->notifyNow(new McuReminderNotification($participant, $type, [\App\Channels\WhatsAppChannel::class]));
+            } catch (\Exception $e) {
+                Log::error("MCU Reminder WA Error: " . $e->getMessage());
             }
         }
 

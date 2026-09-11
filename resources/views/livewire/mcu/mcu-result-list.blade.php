@@ -16,10 +16,10 @@
                 @forelse($mcuResults as $result)
                 <tr>
                     <td class="px-4 py-3 font-medium text-gray-900">
-                        {{ $result->participant->employee->name ?? 'Tidak diketahui' }}
+                        {{ $result->masterData?->employee_name ?? $result->participant?->employee?->name ?? 'Tidak diketahui' }}
                     </td>
                     <td class="px-4 py-3 text-gray-600">
-                        {{ $result->participant->schedule->schedule_date->format('d M Y') ?? '-' }}
+                        {{ $result->masterData?->mcu_date ? $result->masterData->mcu_date->format('d M Y') : ($result->participant?->schedule?->schedule_date ? $result->participant->schedule->schedule_date->format('d M Y') : '-') }}
                     </td>
                     <td class="px-4 py-3">
                         @if($result->status)

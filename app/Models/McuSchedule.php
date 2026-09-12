@@ -14,9 +14,9 @@ class McuSchedule extends Model
         'schedule_date' => 'date',
     ];
 
-    public function participants(): HasMany
+    public function records(): HasMany
     {
-        return $this->hasMany(McuParticipant::class);
+        return $this->hasMany(McuRecord::class);
     }
 
     public function admin(): BelongsTo

@@ -133,6 +133,7 @@ Route::middleware(['auth', 'check.menu'])->group(function () {
 // Bisa diakses keduanya
 Route::middleware(['role:administrator,medical staff'])->group(function () {
     Route::get('mcu/generate', GenerateSchedule::class)->name('mcu.generate');
+    Route::get('mcu/employee/{employeeId}', \App\Livewire\Mcu\EmployeeMcuDetail::class)->name('mcu.employee-detail');
     Route::get('mcu/input-result', InputResult::class)->name('mcu.input-result');
     Route::get('mcu/doctor-review', DoctorReview::class)->name('mcu.doctor-review');
     Route::get('mcu/list', McuResultList::class)->name('mcu.list');

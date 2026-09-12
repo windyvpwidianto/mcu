@@ -15,14 +15,9 @@ class McuResult extends Model
         'is_published' => 'boolean',
     ];
 
-    public function participant(): BelongsTo
+    public function record(): BelongsTo
     {
-        return $this->belongsTo(McuParticipant::class, 'mcu_participant_id');
-    }
-
-    public function masterData(): BelongsTo
-    {
-        return $this->belongsTo(McuMasterData::class, 'mcu_master_data_id');
+        return $this->belongsTo(McuRecord::class, 'mcu_record_id');
     }
     // Tambahkan di dalam class McuResult
     public function diseaseCategories(): BelongsToMany

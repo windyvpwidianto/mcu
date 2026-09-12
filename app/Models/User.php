@@ -148,4 +148,9 @@ class User extends Authenticatable implements LdapAuthenticatable
             collect($roles)->map(fn($role) => strtolower($role))
         )->isNotEmpty();
     }
+
+    public function mcuRecords()
+    {
+        return $this->hasMany(McuRecord::class, 'employee_id');
+    }
 }

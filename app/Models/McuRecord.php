@@ -10,8 +10,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-class McuParticipant extends Model
+class McuRecord extends Model
 {
+    protected $table = 'mcu_records';
     protected $guarded = [];
 
     public function schedule(): BelongsTo

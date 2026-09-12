@@ -2,7 +2,7 @@
 
 namespace App\Livewire\Mcu;
 
-use App\Models\McuParticipant;
+use App\Models\McuRecord;
 use App\Models\McuResult; // Pastikan Anda sudah membuat Model ini
 use Carbon\Carbon;
 use Livewire\Component;
@@ -23,7 +23,7 @@ class InputResult extends Component
     public function rules()
     {
         return [
-            'participant_id' => 'required|exists:mcu_participants,id',
+            'participant_id' => 'required|exists:mcu_records,id',
             'result_document' => 'required|mimes:pdf,jpg,jpeg,png|max:5120', // Max 5MB
             'admin_notes' => 'nullable|string',
         ];
@@ -38,7 +38,7 @@ class InputResult extends Component
 
         // Simpan ke database dengan status langsung 'pending_review' (Sesuai flowchart)
         McuResult::create([
-            'mcu_participant_id' => $this->participant_id,
+            'mcu_record_id' => $this->participant_id,
             'result_document' => $path,
             'admin_notes' => $this->admin_notes,
             'workflow_status'    => 'pending_doctor', // Mengisi status alur kerja
@@ -78,7 +78,7 @@ class InputResult extends Component
     {
         $today = Carbon::today();
         // 1. Mulai query dasar: Ambil peserta yang belum memiliki hasil MCU
-        $query = McuParticipant::whereDoesntHave('result')
+        $query = McuRecord::whereDoesntHave('result')
             ->with(['employee', 'schedule'])
             ->whereHas('schedule', function ($q) use ($today) {
                 $q->whereDate('schedule_date', '>=', $today);

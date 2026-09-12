@@ -3,7 +3,7 @@
 namespace App\Livewire\Mcu;
 
 use App\Models\DiseaseCategory; // <-- 1. Jangan lupa import model ini
-use App\Models\McuParticipant;
+use App\Models\McuRecord;
 use App\Models\McuResult;
 use Carbon\Carbon;
 use Livewire\Component;
@@ -15,14 +15,14 @@ class McuDashboard extends Component
         $today = Carbon::now()->toDateString();
 
         // --- CODE KAMU SEBELUMNYA (Kehadiran, Fit Status, Workflow) ---
-        $sudahMcu = McuParticipant::has('result')->count();
+        $sudahMcu = McuRecord::has('result')->count();
 
-        $terlewatMcu = McuParticipant::whereDoesntHave('result')
+        $terlewatMcu = McuRecord::whereDoesntHave('result')
             ->whereHas('schedule', function ($query) use ($today) {
                 $query->whereDate('schedule_date', '<', $today);
             })->count();
 
-        $menungguJadwal = McuParticipant::whereDoesntHave('result')
+        $menungguJadwal = McuRecord::whereDoesntHave('result')
             ->whereHas('schedule', function ($query) use ($today) {
                 $query->whereDate('schedule_date', '>=', $today);
             })->count();

@@ -19,6 +19,8 @@ class EmployeeMcuDetail extends Component
     public $status = 'Completed';
     public $medical_status = 'fit_to_work'; // from McuResult
 
+    public $editingRecordId = null;
+
     public function mount($employeeId)
     {
         $this->employeeId = $employeeId;
@@ -29,15 +31,40 @@ class EmployeeMcuDetail extends Component
 
     public function openAddModal()
     {
-        $this->reset(['mcu_year', 'mcu_date', 'status', 'medical_status']);
+        $this->reset(['editingRecordId', 'mcu_year', 'mcu_date', 'status', 'medical_status']);
         $this->mcu_year = date('Y');
         $this->mcu_date = date('Y-m-d');
+        $this->showAddModal = true;
+    }
+
+    public function editMcuRecord($recordId)
+    {
+        $record = McuRecord::with('result')->findOrFail($recordId);
+        $this->editingRecordId = $record->id;
+        $this->mcu_year = $record->mcu_year;
+        $this->mcu_date = $record->mcu_date;
+        $this->status = $record->status;
+        $this->medical_status = $record->result ? $record->result->status : 'fit_to_work';
         $this->showAddModal = true;
     }
 
     public function closeAddModal()
     {
         $this->showAddModal = false;
+        $this->editingRecordId = null;
+    }
+
+    public function deleteMcuRecord($recordId)
+    {
+        $record = McuRecord::findOrFail($recordId);
+        $record->delete();
+
+        $this->dispatch('alert', [
+            'text' => 'Riwayat MCU berhasil dihapus.',
+            'duration' => 3000,
+            'close' => true,
+            'backgroundColor' => "linear-gradient(to right, #06b6d4, #22c55e)",
+        ]);
     }
 
     public function saveMcuRecord()
@@ -51,26 +78,51 @@ class EmployeeMcuDetail extends Component
 
         DB::beginTransaction();
         try {
-            // Create record
-            $record = McuRecord::create([
-                'employee_id' => $this->employeeId,
-                'mcu_year' => $this->mcu_year,
-                'mcu_date' => $this->mcu_date,
-                'status' => $this->status,
-                'notification_status' => 'notified',
-            ]);
+            if ($this->editingRecordId) {
+                // Edit mode
+                $record = McuRecord::findOrFail($this->editingRecordId);
+                $record->update([
+                    'mcu_year' => $this->mcu_year,
+                    'mcu_date' => $this->mcu_date,
+                    'status' => $this->status,
+                ]);
 
-            // Create result skeleton
-            $record->result()->create([
-                'status' => $this->medical_status,
-                'workflow_status' => 'reviewed',
-            ]);
+                if ($record->result) {
+                    $record->result->update([
+                        'status' => $this->medical_status,
+                    ]);
+                } else {
+                    $record->result()->create([
+                        'status' => $this->medical_status,
+                        'workflow_status' => 'reviewed',
+                    ]);
+                }
+
+                $msg = 'Riwayat MCU berhasil diperbarui.';
+            } else {
+                // Create mode
+                $record = McuRecord::create([
+                    'employee_id' => $this->employeeId,
+                    'mcu_year' => $this->mcu_year,
+                    'mcu_date' => $this->mcu_date,
+                    'status' => $this->status,
+                    'notification_status' => 'notified',
+                ]);
+
+                // Create result skeleton
+                $record->result()->create([
+                    'status' => $this->medical_status,
+                    'workflow_status' => 'reviewed',
+                ]);
+
+                $msg = 'Riwayat MCU berhasil ditambahkan.';
+            }
 
             DB::commit();
 
             $this->closeAddModal();
             $this->dispatch('alert', [
-                'text' => 'Riwayat MCU berhasil ditambahkan.',
+                'text' => $msg,
                 'duration' => 3000,
                 'close' => true,
                 'backgroundColor' => "linear-gradient(to right, #06b6d4, #22c55e)",

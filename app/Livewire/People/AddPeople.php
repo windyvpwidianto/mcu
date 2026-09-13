@@ -186,6 +186,10 @@ class AddPeople extends Component
                 'backgroundColor' => "linear-gradient(to right, #06b6d4, #22c55e)",
             ]
         );
+
+        // Close the modal and reset form properties
+        $this->dispatch('close-my-modal');
+        $this->reset();
     }
     public function render()
     {

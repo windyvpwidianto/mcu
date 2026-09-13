@@ -153,7 +153,23 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">Tanggal Pelaksanaan</span></label>
-                        <input type="date" wire:model="mcu_date" class="input input-bordered" />
+                        <div class="relative" 
+                             x-data="{ date: @entangle('mcu_date') }" 
+                             x-init="flatpickr($refs.dateInput, { 
+                                dateFormat: 'Y-m-d', 
+                                defaultDate: date,
+                                locale: 'id',
+                                onChange: function(selectedDates, dateStr) {
+                                    date = dateStr;
+                                }
+                             })">
+                            <input type="text" x-ref="dateInput" class="input input-bordered w-full pr-10 bg-white cursor-pointer" placeholder="Pilih Tanggal..." />
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-gray-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                            </div>
+                        </div>
                         @error('mcu_date') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-control">
@@ -194,3 +210,36 @@
 
     @livewire('mcu.activity-history')
 </section>
+
+@push('styles')
+    <!-- Gunakan tema Airbnb yang lebih bersih dan modern -->
+    <link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+    <style>
+        .flatpickr-calendar {
+            font-family: inherit;
+            border: none !important;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04) !important;
+            border-radius: 16px !important;
+            padding: 10px !important;
+        }
+        .flatpickr-months .flatpickr-month {
+            margin-bottom: 10px;
+        }
+        .flatpickr-day {
+            border-radius: 10px !important;
+        }
+        .flatpickr-day.selected, .flatpickr-day.startRange, .flatpickr-day.endRange, .flatpickr-day.selected.inRange, .flatpickr-day.startRange.inRange, .flatpickr-day.endRange.inRange, .flatpickr-day.selected:focus, .flatpickr-day.startRange:focus, .flatpickr-day.endRange:focus, .flatpickr-day.selected:hover, .flatpickr-day.startRange:hover, .flatpickr-day.endRange:hover, .flatpickr-day.selected.prevMonthDay, .flatpickr-day.startRange.prevMonthDay, .flatpickr-day.endRange.prevMonthDay, .flatpickr-day.selected.nextMonthDay, .flatpickr-day.startRange.nextMonthDay, .flatpickr-day.endRange.nextMonthDay {
+            background: #0d9488 !important; /* Tailwind Teal 600 */
+            border-color: #0d9488 !important;
+            font-weight: 600;
+        }
+        .flatpickr-day:hover {
+            background: #f3f4f6 !important;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/id.js"></script>
+@endpush

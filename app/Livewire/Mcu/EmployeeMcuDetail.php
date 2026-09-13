@@ -18,6 +18,7 @@ class EmployeeMcuDetail extends Component
     public $mcu_date;
     public $status = 'Completed';
     public $medical_status = 'fit_to_work'; // from McuResult
+    public $doctor_notes = '';
 
     public $editingRecordId = null;
 
@@ -31,7 +32,7 @@ class EmployeeMcuDetail extends Component
 
     public function openAddModal()
     {
-        $this->reset(['editingRecordId', 'mcu_year', 'mcu_date', 'status', 'medical_status']);
+        $this->reset(['editingRecordId', 'mcu_year', 'mcu_date', 'status', 'medical_status', 'doctor_notes']);
         $this->mcu_year = date('Y');
         $this->mcu_date = date('Y-m-d');
         $this->showAddModal = true;
@@ -45,6 +46,7 @@ class EmployeeMcuDetail extends Component
         $this->mcu_date = $record->mcu_date;
         $this->status = $record->status;
         $this->medical_status = $record->result ? $record->result->status : 'fit_to_work';
+        $this->doctor_notes = $record->result ? $record->result->doctor_notes : '';
         $this->showAddModal = true;
     }
 
@@ -74,7 +76,10 @@ class EmployeeMcuDetail extends Component
             'mcu_date' => 'required|date',
             'status' => 'required|string',
             'medical_status' => 'required|string',
+            'doctor_notes' => 'nullable|string',
         ]);
+
+        $notesToSave = $this->medical_status === 'fit_with_notes' ? $this->doctor_notes : null;
 
         DB::beginTransaction();
         try {
@@ -90,10 +95,12 @@ class EmployeeMcuDetail extends Component
                 if ($record->result) {
                     $record->result->update([
                         'status' => $this->medical_status,
+                        'doctor_notes' => $notesToSave,
                     ]);
                 } else {
                     $record->result()->create([
                         'status' => $this->medical_status,
+                        'doctor_notes' => $notesToSave,
                         'workflow_status' => 'reviewed',
                     ]);
                 }
@@ -112,6 +119,7 @@ class EmployeeMcuDetail extends Component
                 // Create result skeleton
                 $record->result()->create([
                     'status' => $this->medical_status,
+                    'doctor_notes' => $notesToSave,
                     'workflow_status' => 'reviewed',
                 ]);
 

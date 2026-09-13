@@ -28,7 +28,15 @@
                     <div class="badge badge-outline">{{ $employee->pilih_divisi ?? 'No Division' }}</div>
                 </div>
             </div>
-            <div>
+            <div class="flex gap-2">
+                @if(auth()->user()->hasAnyRole(['administrator', 'medical staff', 'doctor site']))
+                    <button wire:click="$dispatch('openMcuHistory', { employeeId: {{ $employee->id }} })" class="btn btn-outline shadow hover:-translate-y-0.5 transition-all tooltip" data-tip="Lihat Activity History MCU">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        History
+                    </button>
+                @endif
                 <button wire:click="openAddModal" class="btn btn-primary shadow hover:-translate-y-0.5 transition-all">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -159,7 +167,7 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">Kesimpulan Medis Dasar</span></label>
-                        <select wire:model="medical_status" class="select select-bordered">
+                        <select wire:model.live="medical_status" class="select select-bordered">
                             <option value="fit_to_work">Fit To Work</option>
                             <option value="fit_with_notes">Fit With Notes</option>
                             <option value="temporary_unfit">Temporary Unfit</option>
@@ -167,6 +175,14 @@
                         </select>
                         @error('medical_status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
+                    
+                    @if($medical_status === 'fit_with_notes')
+                        <div class="form-control">
+                            <label class="label"><span class="label-text font-semibold">Catatan MCU (Notes)</span></label>
+                            <textarea wire:model="doctor_notes" class="textarea textarea-bordered h-24" placeholder="Tuliskan catatan medis dari dokter di sini..."></textarea>
+                            @error('doctor_notes') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+                    @endif
                 </div>
                 <div class="p-5 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-2xl">
                     <button wire:click="closeAddModal" class="btn btn-outline">Batal</button>
@@ -175,4 +191,6 @@
             </div>
         </div>
     @endif
+
+    @livewire('mcu.activity-history')
 </section>

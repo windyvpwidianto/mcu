@@ -197,6 +197,16 @@ class GenerateSchedule extends Component
 
             DB::commit();
 
+            activity('mcu')
+                ->causedBy(auth()->user())
+                ->withProperties([
+                    'success' => $this->importResults['success'],
+                    'failed' => $this->importResults['failed'],
+                    'new_schedules' => $this->importResults['new_schedules'],
+                    'new_participants' => $this->importResults['new_participants'],
+                ])
+                ->log('Melakukan import data MCU schedule dari Excel');
+
             if ($this->importResults['failed'] == 0) {
                 $this->dispatch('alert', [
                     'text' => 'Semua data Excel berhasil diimport!',

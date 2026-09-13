@@ -140,6 +140,15 @@ class DoctorReview extends Component
                 }
             }
 
+            activity('mcu')
+                ->performedOn($result)
+                ->causedBy(auth()->user())
+                ->withProperties([
+                    'fit_status' => $this->fit_status,
+                    'doctor_notes' => $this->doctor_notes,
+                ])
+                ->log('Dokter melakukan review hasil MCU');
+
             $this->showReviewModal = false;
             $this->reset(['fit_status', 'doctor_notes', 'selectedDiseaseCategories', 'selectedResultId']);
 

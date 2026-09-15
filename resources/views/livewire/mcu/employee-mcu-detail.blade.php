@@ -79,7 +79,9 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @if($record->result)
+                                    @if($record->status === 'Pending' || !$record->result)
+                                        <span class="text-base-content/40 italic">Menunggu Hasil</span>
+                                    @else
                                         @php
                                             $medColor = match($record->result->status) {
                                                 'fit_to_work' => 'text-success',
@@ -91,8 +93,6 @@
                                             $medText = ucwords(str_replace('_', ' ', $record->result->status ?? 'Pending'));
                                         @endphp
                                         <span class="font-semibold {{ $medColor }}">{{ $medText }}</span>
-                                    @else
-                                        <span class="text-base-content/40 italic">Menunggu Hasil</span>
                                     @endif
                                 </td>
                                 <td class="text-right">

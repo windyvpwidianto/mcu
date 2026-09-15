@@ -1,6 +1,6 @@
 <div x-data="{ open: @entangle('isOpen') }" 
      x-show="open" 
-     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-gray-900/70 backdrop-blur-sm transition-opacity"
      style="display: none;"
      x-transition:enter="ease-out duration-300"
      x-transition:enter-start="opacity-0"
@@ -9,7 +9,7 @@
      x-transition:leave-start="opacity-100"
      x-transition:leave-end="opacity-0">
     
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden" 
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[85vh] flex flex-col overflow-hidden" 
          @click.outside="open = false"
          x-transition:enter="ease-out duration-300"
          x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
@@ -19,7 +19,7 @@
          x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95">
         
         <!-- Header -->
-        <div class="px-8 py-5 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-10">
             <div class="flex items-center gap-3">
                 <div class="p-2 bg-primary/10 rounded-xl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -39,7 +39,7 @@
         </div>
 
         <!-- Body / Timeline -->
-        <div class="p-8 overflow-y-auto flex-1 bg-gray-50/30">
+        <div class="p-6 overflow-y-auto flex-1 bg-gray-50/50">
             @if($activities->isEmpty())
                 <div class="flex flex-col items-center justify-center py-16 text-gray-400">
                     <div class="bg-gray-100 p-4 rounded-full mb-4">
@@ -55,7 +55,7 @@
                     @foreach($activities as $index => $activity)
                         <div class="flex">
                             <!-- Desktop Timestamp -->
-                            <div class="hidden md:block w-32 shrink-0 text-right pr-6 pt-1">
+                            <div class="hidden md:block w-28 shrink-0 text-right pr-4 pt-1">
                                 <div class="text-sm font-bold text-gray-800">{{ $activity->created_at->format('d M Y') }}</div>
                                 <div class="text-xs text-gray-500 font-mono mt-0.5">{{ $activity->created_at->format('H:i:s') }}</div>
                             </div>
@@ -189,7 +189,7 @@
         </div>
         
         <!-- Footer -->
-        <div class="px-8 py-4 border-t border-gray-100 bg-gray-50 flex justify-end">
+        <div class="px-6 py-4 border-t border-gray-100 bg-gray-50 flex justify-end rounded-b-2xl">
             <button @click="open = false" wire:click="closeModal" class="btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-100 hover:border-gray-400">
                 Tutup Jendela
             </button>

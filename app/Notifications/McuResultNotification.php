@@ -38,10 +38,10 @@ class McuResultNotification extends Notification implements ShouldQueue
     public function toMail(object $notifiable): MailMessage
     {
         // PENTING: Ambil ulang relasi yang hilang akibat serialisasi Queue
-        $this->result->loadMissing(['participant.employee', 'participant.supervisor']);
+        $this->result->loadMissing(['record.employee', 'record.supervisor']);
 
-        $employeeName = $this->result->participant->employee->name ?? 'Karyawan';
-        $supervisorName = $this->result->participant->supervisor->name ?? 'Supervisor';
+        $employeeName = $this->result->record->employee->name ?? 'Karyawan';
+        $supervisorName = $this->result->record->supervisor->name ?? 'Supervisor';
         $statusText = str_replace('_', ' ', strtoupper($this->result->status));
 
         if ($this->recipientType === 'employee') {
@@ -73,9 +73,9 @@ class McuResultNotification extends Notification implements ShouldQueue
     public function toWhatsApp(object $notifiable): array
     {
         // 1. PENTING: Tambahkan 'diseaseCategories' ke dalam loadMissing
-        $this->result->loadMissing(['participant.employee', 'participant.supervisor', 'diseaseCategories']);
+        $this->result->loadMissing(['record.employee', 'record.supervisor', 'diseaseCategories']);
 
-        $employeeName = $this->result->participant->employee->name ?? 'Karyawan';
+        $employeeName = $this->result->record->employee->name ?? 'Karyawan';
         $statusText = str_replace('_', ' ', strtoupper($this->result->status));
 
         // 2. Ambil daftar penyakit dari tabel pivot dan gabungkan menjadi string teks
@@ -100,7 +100,7 @@ class McuResultNotification extends Notification implements ShouldQueue
                 $text .= "\nMohon segera melakukan konsultasi dengan Dokter Onsite untuk mendapatkan surat rujukan. Selanjutnya, harap melakukan pemeriksaan lanjutan ke dokter spesialis sesuai rujukan paling lambat 10 (Sepuluh) hari kerja sejak pesan ini diterima.\n\nSetelah konsultasi selesai, mohon menyerahkan hasil pemeriksaan kepada Klinik Perusahaan sebagai dasar evaluasi status kesehatan dan kelayakan bekerja.\n\nApabila memerlukan bantuan atau informasi lebih lanjut, silakan menghubungi Klinik Toka.\n";
             }
             $text .= "\nTerima kasih dan semoga selalu sehat.";
-            $phone = $notifiable->whatsapp_number ?? $notifiable->phone ?? $this->result->participant->whatsapp_number;
+            $phone = $notifiable->whatsapp_number ?? $notifiable->phone ?? $this->result->record->whatsapp_number;
         } else {
             $spvName = $notifiable->name ?? 'Bapak/Ibu Atasan';
 
@@ -114,7 +114,7 @@ class McuResultNotification extends Notification implements ShouldQueue
                 $text .= "*Temuan Medis / Penyakit:* {$diseases}\n";
             }
 
-            $phone = $notifiable->whatsapp_number ?? $notifiable->phone ?? $this->result->participant->spv_wa_number;
+            $phone = $notifiable->whatsapp_number ?? $notifiable->phone ?? $this->result->record->spv_wa_number;
         }
 
         return [
@@ -130,7 +130,7 @@ class McuResultNotification extends Notification implements ShouldQueue
             'status'        => $this->result->status,
             'message'       => $this->recipientType === 'employee'
                 ? 'Hasil review MCU Anda sudah keluar dengan status ' . $this->result->status
-                : 'Anggota tim Anda (' . ($this->result->participant->employee->name ?? 'Karyawan') . ') telah di-review dengan status ' . $this->result->status,
+                : 'Anggota tim Anda (' . ($this->result->record->employee->name ?? 'Karyawan') . ') telah di-review dengan status ' . $this->result->status,
         ];
     }
 }

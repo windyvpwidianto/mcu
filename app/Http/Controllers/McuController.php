@@ -19,13 +19,13 @@ class McuController extends Controller
 
         $data = [
             'result' => $mcuResult,
-            'employee' => $mcuResult->participant->employee,
-            'schedule' => $mcuResult->participant->schedule,
+            'employee' => $mcuResult->record->employee,
+            'schedule' => $mcuResult->record->schedule,
         ];
 
         $pdf = Pdf::loadView('pdf.mcu_fit_letter', $data);
 
         // stream() agar PDF terbuka di tab browser (tidak otomatis terdownload)
-        return $pdf->stream('Surat_Keterangan_FIT_' . ($mcuResult->participant->employee->name ?? 'Karyawan') . '.pdf');
+        return $pdf->stream('Surat_Keterangan_FIT_' . ($mcuResult->record->employee->name ?? 'Karyawan') . '.pdf');
     }
 }

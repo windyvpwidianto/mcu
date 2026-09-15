@@ -73,7 +73,7 @@ class DoctorReview extends Component
             return;
         }
 
-        $result = McuResult::with(['participant.employee', 'participant.deptHead'])->find($this->selectedResultId);
+        $result = McuResult::with(['record.employee', 'record.deptHead'])->find($this->selectedResultId);
 
         if ($result) {
             $result->update([
@@ -115,8 +115,8 @@ class DoctorReview extends Component
             }
 
             // ... (KODE NOTIFIKASI DAN RESET FORM ANDA DI BAWAHNYA TETAP SAMA) ...
-            $employeeUser = $result->participant?->employee;
-            $deptHeadUser = $result->participant?->deptHead;
+            $employeeUser = $result->record?->employee;
+            $deptHeadUser = $result->record?->deptHead;
 
             if ($employeeUser) {
                 // Notifikasi WhatsApp dan Database dikirim langsung (tanpa antrean/defer)
@@ -159,7 +159,7 @@ class DoctorReview extends Component
     public function render()
     {
         $pendingReviews = McuResult::where('workflow_status', 'pending_doctor')
-            ->with(['participant.employee', 'diseaseCategories'])
+            ->with(['record.employee', 'diseaseCategories'])
             ->get();
 
         return view('livewire.mcu.doctor-review', [

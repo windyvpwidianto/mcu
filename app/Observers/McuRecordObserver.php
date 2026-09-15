@@ -62,10 +62,10 @@ class McuRecordObserver
         if (!$user) return;
 
         // Get the latest valid MCU date
-        // Valid means it has a date. We ignore 'Cancelled' status if such exists.
+        // Valid means it has a date and status is not Pending, Rescheduled, or Cancelled.
         $latestRecord = McuRecord::where('employee_id', $employeeId)
             ->whereNotNull('mcu_date')
-            ->where('status', '!=', 'Cancelled')
+            ->whereNotIn('status', ['Cancelled', 'Pending', 'Rescheduled'])
             ->orderBy('mcu_date', 'desc')
             ->first();
 

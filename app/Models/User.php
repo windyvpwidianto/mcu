@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Models\Role;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -152,5 +153,31 @@ class User extends Authenticatable implements LdapAuthenticatable
     public function mcuRecords()
     {
         return $this->hasMany(McuRecord::class, 'employee_id');
+    }
+
+    public function getCurrentMcuStatusAttribute()
+    {
+        if (!$this->next_mcu_date) {
+            return 'UPCOMING'; // or unknown, but typically upcoming if no record yet
+        }
+
+        $nextDate = Carbon::parse($this->next_mcu_date)->startOfDay();
+        $today = Carbon::today();
+
+        // Cek jika expired
+        if ($today->gt($nextDate)) {
+            // Apakah sudah ada jadwal reschedule?
+            $hasRescheduled = $this->mcuRecords()
+                                   ->whereIn('status', ['Rescheduled', 'Pending'])
+                                   ->whereDate('created_at', '>=', $nextDate)
+                                   ->exists();
+            if ($hasRescheduled) {
+                return 'RESCHEDULED';
+            }
+            
+            return 'EXPIRED';
+        }
+
+        return 'ACTIVE';
     }
 }

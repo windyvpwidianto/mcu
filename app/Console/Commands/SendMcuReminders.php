@@ -8,7 +8,10 @@ use App\Models\Contractor;
 use App\Models\McuNotificationLog;
 use Carbon\Carbon;
 use App\Jobs\SendMcuWhatsAppJob;
+use App\Jobs\SendMcuExpiredWhatsAppJob;
 use App\Jobs\SendMcuContractorEmailJob;
+use App\Jobs\SendMcuExpiredContractorEmailJob;
+use App\Models\McuRecord;
 
 class SendMcuReminders extends Command
 {
@@ -50,11 +53,17 @@ class SendMcuReminders extends Command
                 $stage = 'MCU_H7';
             } elseif ($diffDays == 3) {
                 $stage = 'MCU_H3';
-            } elseif ($diffDays < 0 && $diffDays > -30) {
-                // Biar tidak di-spam, kita peringatkan saat overdue pertama kali (misal H+1 atau sesuai logic)
-                // Kita sederhanakan logic Overdue reminder (opsional, sesuaikan dengan request minimal: H-30, H-7, H-3)
-                // User requirement: H-30, H-7, H-3
-                // Kita lewati overdue harian, hanya tracking status
+            } elseif ($diffDays < 0) {
+                // EXPIRED
+                // Pastikan belum dire-schedule (status != Rescheduled atau Pending sesudah expiry date)
+                $hasRescheduled = $user->mcuRecords()
+                                       ->whereIn('status', ['Rescheduled', 'Pending'])
+                                       ->whereDate('created_at', '>=', $nextMcu)
+                                       ->exists();
+                
+                if (!$hasRescheduled) {
+                    $stage = 'MCU_EXPIRED';
+                }
             }
 
             if (!$stage) continue;
@@ -102,20 +111,31 @@ class SendMcuReminders extends Command
                 'status' => 'Queued',
             ]);
 
-            SendMcuWhatsAppJob::dispatch($log->id);
+            if ($stage === 'MCU_EXPIRED') {
+                // Auto create rescheduled record
+                McuRecord::create([
+                    'employee_id' => $user->id,
+                    'mcu_year' => $today->year,
+                    'mcu_date' => $today->toDateString(),
+                    'status' => 'Rescheduled',
+                ]);
+                
+                SendMcuExpiredWhatsAppJob::dispatch($user, $nextMcu->toDateString());
+            } else {
+                SendMcuWhatsAppJob::dispatch($user, $nextMcu->toDateString());
+            }
             $this->info("Queued WA for User ID {$user->id} - Stage: {$stage}");
         }
     }
 
     private function processContractorGroup(Contractor $contractor, $stage, $users, Carbon $today)
     {
-        // For contractor, the scheduled_date for the *batch* might be today or we can use today's date for grouping logic
-        // Because a contractor batch could contain multiple next_mcu_date (if we group by stage). Wait, if they are H-30 today, they all have the same next_mcu_date.
-        // Yes, if it's H-30 today, their next_mcu_date is today + 30 days. So it's safe to use that date.
         $targetDate = null;
         if ($stage === 'MCU_H30') $targetDate = $today->copy()->addDays(30);
-        if ($stage === 'MCU_H7') $targetDate = $today->copy()->addDays(7);
-        if ($stage === 'MCU_H3') $targetDate = $today->copy()->addDays(3);
+        elseif ($stage === 'MCU_H7') $targetDate = $today->copy()->addDays(7);
+        elseif ($stage === 'MCU_H3') $targetDate = $today->copy()->addDays(3);
+        elseif ($stage === 'MCU_EXPIRED') $targetDate = $today->copy(); // Gunakan hari ini untuk log rekap
+        else $targetDate = $today->copy();
 
         $exists = McuNotificationLog::where('contractor_id', $contractor->id)
             ->where('notification_stage', $stage)
@@ -131,9 +151,29 @@ class SendMcuReminders extends Command
                 'status' => 'Queued',
             ]);
 
-            // Pass the user IDs to the job so it knows who to include in the email
-            $userIds = collect($users)->pluck('id')->toArray();
-            SendMcuContractorEmailJob::dispatch($log->id, $userIds);
+            if ($stage === 'MCU_EXPIRED') {
+                $expiredEmployees = [];
+                foreach ($users as $u) {
+                    // Auto create rescheduled record
+                    McuRecord::create([
+                        'employee_id' => $u->id,
+                        'mcu_year' => $today->year,
+                        'mcu_date' => $today->toDateString(),
+                        'status' => 'Rescheduled',
+                    ]);
+
+                    $expiredEmployees[] = [
+                        'name' => $u->name,
+                        'employee_id' => $u->employee_id,
+                        'last_mcu_date' => $u->mcuRecords()->whereIn('status', ['Completed'])->latest('mcu_date')->value('mcu_date'),
+                        'next_mcu_date' => $u->next_mcu_date
+                    ];
+                }
+                SendMcuExpiredContractorEmailJob::dispatch($contractor->id, $targetDate->toDateString(), $expiredEmployees);
+            } else {
+                $userIds = collect($users)->pluck('id')->toArray();
+                SendMcuContractorEmailJob::dispatch($log->id, $userIds);
+            }
             $this->info("Queued Email for Contractor ID {$contractor->id} - Stage: {$stage}");
         }
     }

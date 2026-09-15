@@ -49,7 +49,7 @@
     <!-- Search & Filter Bar -->
     <div class="grid items-center grid-cols-1 gap-4 mb-6 md:grid-cols-4 lg:grid-cols-5">
         <div class="md:col-span-2 lg:col-span-2">
-            <x-form.input-floating label="Cari Karyawan (Nama / NIK)..." model="search" />
+            <x-form.input-floating label="Cari Karyawan (Nama / ID Badge)..." model="search" />
         </div>
         <div>
             <select wire:model.live="filterDepartment" class="select select-bordered w-full select-md">
@@ -96,7 +96,7 @@
                                     </div>
                                     <div>
                                         <div class="font-bold">{{ $employee->name }}</div>
-                                        <div class="text-xs font-mono opacity-60">NIK: {{ $employee->employee_id ?? '-' }}</div>
+                                        <div class="text-xs font-mono opacity-60">ID Badge: {{ $employee->employee_id ?? '-' }}</div>
                                     </div>
                                 </div>
                             </td>
@@ -162,7 +162,7 @@
                                 <div class="text-sm">
                                     Minimal memiliki 3 kolom (baris pertama sebagai header):
                                     <ul class="list-disc list-inside mt-1 space-y-0.5">
-                                        <li><span class="font-mono bg-blue-100 px-1 rounded">employee_id</span> (NIK Karyawan)</li>
+                                        <li><span class="font-mono bg-blue-100 px-1 rounded">employee_id</span> (ID Badge Karyawan)</li>
                                         <li><span class="font-mono bg-blue-100 px-1 rounded">tanggal_mcu</span> (Format: YYYY-MM-DD atau cell date)</li>
                                         <li><span class="font-mono bg-blue-100 px-1 rounded">lokasi_mcu</span> (Nama klinik/RS - Opsional)</li>
                                     </ul>

@@ -23,9 +23,8 @@ class McuResultList extends Component
     public function render()
     {
         $mcuResults = McuResult::with([
-            'participant.employee',
-            'participant.schedule',
-            'masterData'
+            'record.employee',
+            'record.schedule'
         ])
             ->whereIn('workflow_status', ['pending_doctor', 'reviewed'])
             ->orderBy('created_at', 'desc')
@@ -38,7 +37,7 @@ class McuResultList extends Component
     public function openReviewModal($id)
     {
         // 1. Cari data MCU beserta relasi karyawannya
-        $result = McuResult::with('participant.employee')->find($id);
+        $result = McuResult::with('record.employee')->find($id);
 
         if ($result) {
             // 2. Set ID yang sedang dipilih
@@ -55,7 +54,7 @@ class McuResultList extends Component
                 : null;
 
             // Ambil nama karyawan untuk keperluan UI Modal
-            $this->employeeName = $result->masterData?->employee_name ?? $result->participant?->employee?->name ?? 'Tidak diketahui';
+            $this->employeeName = $result->masterData?->employee_name ?? $result->record?->employee?->name ?? 'Tidak diketahui';
 
             // 4. Buka modal
             $this->showReviewModal = true;

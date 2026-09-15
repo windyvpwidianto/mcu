@@ -79,10 +79,7 @@ class InputResult extends Component
         $today = Carbon::today();
         // 1. Mulai query dasar: Ambil peserta yang belum memiliki hasil MCU
         $query = McuRecord::whereDoesntHave('result')
-            ->with(['employee', 'schedule'])
-            ->whereHas('schedule', function ($q) use ($today) {
-                $q->whereDate('schedule_date', '>=', $today);
-            });
+            ->with(['employee', 'schedule']);
 
         // 3. Tambahkan filter pencarian (Jika user mengetik di input pencarian)
         if (!empty($this->searchParticipant) && empty($this->participant_id)) {

@@ -39,7 +39,7 @@
         </div>
 
         <!-- Body / Timeline -->
-        <div class="p-6 overflow-y-auto flex-1 bg-gray-50/50">
+        <div class="p-6 overflow-y-auto flex-1 max-h-[60vh] bg-gray-50/50 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
             @if($activities->isEmpty())
                 <div class="flex flex-col items-center justify-center py-16 text-gray-400">
                     <div class="bg-gray-100 p-4 rounded-full mb-4">

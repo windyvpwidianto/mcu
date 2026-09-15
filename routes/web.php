@@ -55,6 +55,7 @@ use App\Livewire\Mcu\GenerateSchedule;
 use App\Livewire\Mcu\InputResult;
 use App\Livewire\Mcu\McuDashboard;
 use App\Livewire\Mcu\McuResultList;
+use App\Livewire\Mcu\McuUpcoming;
 use App\Livewire\Settings\Appearance;
 use App\Livewire\Settings\Password;
 use App\Livewire\Public\HealthStatistics;
@@ -137,6 +138,7 @@ Route::middleware(['role:administrator,medical staff'])->group(function () {
     Route::get('mcu/input-result', InputResult::class)->name('mcu.input-result');
     Route::get('mcu/doctor-review', DoctorReview::class)->name('mcu.doctor-review');
     Route::get('mcu/list', McuResultList::class)->name('mcu.list');
+    Route::get('mcu/upcoming', McuUpcoming::class)->name('mcu.upcoming');
     Route::get('mcu/dashboard', McuDashboard::class)->name('mcu.dashboard');
     Route::get('mcu/fit-letter/{id}', [\App\Http\Controllers\McuController::class, 'printFitLetter'])->name('mcu.fit-letter');
 

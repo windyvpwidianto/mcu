@@ -26,6 +26,9 @@
                 <div class="flex flex-wrap justify-center md:justify-start gap-2 mt-4">
                     <div class="badge badge-primary">{{ $employee->department_name ?? 'No Department' }}</div>
                     <div class="badge badge-outline">{{ $employee->pilih_divisi ?? 'No Division' }}</div>
+                    @if($employee->next_mcu_date)
+                        <div class="badge badge-secondary badge-outline tooltip" data-tip="Jadwal MCU Tahun Berikutnya">Next MCU: {{ \Carbon\Carbon::parse($employee->next_mcu_date)->translatedFormat('d F Y') }}</div>
+                    @endif
                 </div>
             </div>
             <div class="flex gap-2">

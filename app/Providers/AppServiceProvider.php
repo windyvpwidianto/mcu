@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\URL; // <-- Tambahkan ini
+use App\Models\McuRecord;
+use App\Observers\McuRecordObserver;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -39,6 +41,9 @@ class AppServiceProvider extends ServiceProvider
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
         }
+
+        // Register Observers
+        McuRecord::observe(McuRecordObserver::class);
 
         // === SQLite Compatibility Functions for MySQL Date Functions ===
         $registerSqliteFunctions = function ($connection) {

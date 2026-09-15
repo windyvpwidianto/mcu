@@ -7,4 +7,4 @@ use Illuminate\Support\Facades\Schedule;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
-Schedule::command('mcu:process-reminders')->dailyAt('08:00');
+Schedule::command('mcu:send-reminders')->dailyAt('07:00');

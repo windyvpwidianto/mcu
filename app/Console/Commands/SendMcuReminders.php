@@ -131,6 +131,7 @@ class SendMcuReminders extends Command
                     'attendance_status' => 'scheduled',
                     'process_status' => 'scheduled',
                     'notification_status' => 'pending',
+                    'reschedule_count' => ($expiredRecord->reschedule_count ?? 0) + 1,
                 ]);
                 
                 $expiredRecord->update(['rescheduled_to_id' => $newRecord->id]);
@@ -188,6 +189,7 @@ class SendMcuReminders extends Command
                         'attendance_status' => 'scheduled',
                         'process_status' => 'scheduled',
                         'notification_status' => 'pending',
+                        'reschedule_count' => ($expiredRecord->reschedule_count ?? 0) + 1,
                     ]);
                     
                     $expiredRecord->update(['rescheduled_to_id' => $newRecord->id]);

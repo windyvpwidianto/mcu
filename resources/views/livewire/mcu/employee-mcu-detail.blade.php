@@ -26,6 +26,12 @@
                 <div class="flex flex-wrap justify-center md:justify-start gap-2 mt-4">
                     <div class="badge badge-primary">{{ $employee->department_name ?? 'No Department' }}</div>
                     <div class="badge badge-outline">{{ $employee->pilih_divisi ?? 'No Division' }}</div>
+                    @php
+                        $lastMcuRecord = $employee->mcuRecords()->where('process_status', 'completed')->where('attendance_status', 'present')->orderBy('mcu_date', 'desc')->first();
+                    @endphp
+                    @if($lastMcuRecord)
+                        <div class="badge badge-success badge-outline tooltip" data-tip="Tanggal MCU Terakhir">Last MCU: {{ \Carbon\Carbon::parse($lastMcuRecord->mcu_date)->translatedFormat('d F Y') }}</div>
+                    @endif
                     @if($employee->next_mcu_date)
                         <div class="badge badge-secondary badge-outline tooltip" data-tip="Jadwal MCU Tahun Berikutnya">Next MCU: {{ \Carbon\Carbon::parse($employee->next_mcu_date)->translatedFormat('d F Y') }}</div>
                     @endif
@@ -116,7 +122,24 @@
                             @endphp
                             <tr class="hover">
                                 <td class="font-bold text-lg">{{ $record->mcu_year }}</td>
-                                <td>{{ \Carbon\Carbon::parse($record->mcu_date)->translatedFormat('d F Y') }}</td>
+                                <td>
+                                    <div class="font-semibold">{{ \Carbon\Carbon::parse($record->mcu_date)->translatedFormat('d F Y') }}</div>
+                                    @if($record->reschedule_count > 0)
+                                        <div class="badge badge-warning badge-sm mt-1">Reschedule ke-{{ $record->reschedule_count }}</div>
+                                    @endif
+                                    @if($record->rescheduledTo)
+                                        <div class="text-xs text-base-content/60 mt-1 border-l-2 border-base-300 pl-2">
+                                            <span class="block font-semibold">Rescheduled To:</span>
+                                            <span class="block">{{ \Carbon\Carbon::parse($record->rescheduledTo->mcu_date)->translatedFormat('d F Y') }}</span>
+                                        </div>
+                                    @endif
+                                    @if($record->originalRecord)
+                                        <div class="text-xs text-base-content/60 mt-1 border-l-2 border-base-300 pl-2">
+                                            <span class="block font-semibold">Jadwal Lama:</span>
+                                            <span class="block">{{ \Carbon\Carbon::parse($record->originalRecord->mcu_date)->translatedFormat('d F Y') }}</span>
+                                        </div>
+                                    @endif
+                                </td>
                                 <td>
                                     <div class="badge {{ $attendanceBadge }} badge-outline">
                                         {{ $attendanceText }}

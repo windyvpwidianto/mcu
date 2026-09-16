@@ -153,6 +153,7 @@ class EmployeeMcuDetail extends Component
                     'attendance_status' => 'scheduled',
                     'process_status' => 'scheduled',
                     'notification_status' => 'pending',
+                    'reschedule_count' => ($record->reschedule_count ?? 0) + 1,
                 ]);
 
                 $newRecord->result()->create([

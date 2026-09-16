@@ -66,23 +66,77 @@
                         <tr>
                             <th>Tahun</th>
                             <th>Tanggal Pelaksanaan</th>
-                            <th>Status Kehadiran</th>
-                            <th>Hasil Medis</th>
+                            <th>Kehadiran</th>
+                            <th>Masa Berlaku</th>
+                            <th>Kesimpulan</th>
+                            <th>Status</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody>
-                        @forelse($employee->mcuRecords as $record)
+                        @forelse($employee->mcuRecords as $index => $record)
+                            @php
+                                // Kehadiran
+                                $attendanceBadge = match($record->attendance_status) {
+                                    'present' => 'badge-success',
+                                    'absent' => 'badge-error',
+                                    'rescheduled' => 'badge-warning',
+                                    'scheduled' => 'badge-info',
+                                    default => 'badge-ghost',
+                                };
+                                $attendanceText = ucwords(str_replace('_', ' ', $record->attendance_status ?? 'Scheduled'));
+
+                                // Status Proses
+                                $processBadge = match($record->process_status) {
+                                    'completed' => 'badge-success',
+                                    'no_show' => 'badge-error',
+                                    'rescheduled' => 'badge-warning',
+                                    'expired' => 'badge-neutral',
+                                    'scheduled' => 'badge-info',
+                                    default => 'badge-ghost',
+                                };
+                                $processText = ucwords(str_replace('_', ' ', $record->process_status ?? 'Scheduled'));
+
+                                // Masa Berlaku
+                                // Only the most recent 'Completed' & 'Present' MCU might be Active.
+                                // If the record is older, or if it's absent, it's N/A or Expired.
+                                $isLatestValid = ($index === 0 && $record->process_status === 'completed' && $record->attendance_status === 'present');
+                                $validityBadge = 'badge-ghost';
+                                $validityText = 'N/A';
+                                
+                                if ($record->attendance_status === 'present' && $record->process_status === 'completed') {
+                                    if ($isLatestValid) {
+                                        $nextDate = \Carbon\Carbon::parse($employee->next_mcu_date);
+                                        $isExpired = \Carbon\Carbon::today()->gt($nextDate);
+                                        $validityBadge = $isExpired ? 'badge-error' : 'badge-success';
+                                        $validityText = $isExpired ? 'Expired' : 'Active';
+                                    } else {
+                                        $validityBadge = 'badge-error';
+                                        $validityText = 'Expired';
+                                    }
+                                }
+                            @endphp
                             <tr class="hover">
                                 <td class="font-bold text-lg">{{ $record->mcu_year }}</td>
                                 <td>{{ \Carbon\Carbon::parse($record->mcu_date)->translatedFormat('d F Y') }}</td>
                                 <td>
-                                    <div class="badge {{ $record->status == 'Completed' ? 'badge-success' : 'badge-warning' }} badge-outline">
-                                        {{ $record->status }}
+                                    <div class="badge {{ $attendanceBadge }} badge-outline">
+                                        {{ $attendanceText }}
                                     </div>
                                 </td>
                                 <td>
-                                    @if($record->status === 'Pending' || !$record->result)
+                                    @if($validityText !== 'N/A')
+                                        <div class="badge {{ $validityBadge }} badge-outline font-semibold">
+                                            {{ $validityText }}
+                                        </div>
+                                    @else
+                                        <span class="text-base-content/40 italic">N/A</span>
+                                    @endif
+                                </td>
+                                <td>
+                                    @if($record->attendance_status === 'absent' || $record->process_status === 'no_show')
+                                        <span class="text-base-content/40 italic font-semibold">N/A (Tidak Diperiksa)</span>
+                                    @elseif(!$record->result)
                                         <span class="text-base-content/40 italic">Menunggu Hasil</span>
                                     @else
                                         @php
@@ -91,6 +145,7 @@
                                                 'fit_with_notes' => 'text-warning',
                                                 'temporary_unfit' => 'text-error',
                                                 'unfit' => 'text-error',
+                                                'not_examined', 'n_a' => 'text-base-content/40',
                                                 default => 'text-base-content/50'
                                             };
                                             $medText = ucwords(str_replace('_', ' ', $record->result->status ?? 'Pending'));
@@ -98,15 +153,19 @@
                                         <span class="font-semibold {{ $medColor }}">{{ $medText }}</span>
                                     @endif
                                 </td>
+                                <td>
+                                    <div class="badge {{ $processBadge }} badge-sm">
+                                        {{ $processText }}
+                                    </div>
+                                </td>
                                 <td class="text-right">
                                     <div class="flex items-center justify-end gap-2">
                                         @if($record->result && $record->result->result_document)
-                                            <a href="{{ route('mcu.document.secure-view', ['path' => \Illuminate\Support\Facades\Crypt::encryptString($record->result->result_document)]) }}" target="_blank" class="btn btn-sm btn-info btn-outline">
+                                            <a href="{{ route('mcu.document.secure-view', ['path' => \Illuminate\Support\Facades\Crypt::encryptString($record->result->result_document)]) }}" target="_blank" class="btn btn-sm btn-info btn-outline tooltip" data-tip="Lihat dokumen">
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                                 </svg>
-                                                Lihat dokumen
                                             </a>
                                         @endif
                                         
@@ -123,9 +182,10 @@
                                     </div>
                                 </td>
                             </tr>
+
                         @empty
                             <tr>
-                                <td colspan="5" class="text-center py-8 text-base-content/50">
+                                <td colspan="7" class="text-center py-8 text-base-content/50">
                                     <div class="flex flex-col items-center gap-2">
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 opacity-40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -177,13 +237,26 @@
                         @error('mcu_date') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-control">
-                        <label class="label"><span class="label-text font-semibold">Status Kehadiran</span></label>
-                        <select wire:model="status" class="select select-bordered">
-                            <option value="Completed">Selesai / Hadir</option>
-                            <option value="Absent">Tidak Hadir</option>
-                            <option value="Pending">Menunggu Pelaksanaan</option>
+                        <label class="label"><span class="label-text font-semibold">Kehadiran (Attendance)</span></label>
+                        <select wire:model="attendance_status" class="select select-bordered">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="present">Present (Hadir)</option>
+                            <option value="absent">Absent (Tidak Hadir)</option>
+                            <option value="rescheduled">Rescheduled</option>
+                            <option value="cancelled">Cancelled</option>
                         </select>
-                        @error('status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        @error('attendance_status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                    </div>
+                    <div class="form-control">
+                        <label class="label"><span class="label-text font-semibold">Status Proses MCU</span></label>
+                        <select wire:model="process_status" class="select select-bordered">
+                            <option value="scheduled">Scheduled</option>
+                            <option value="completed">Completed</option>
+                            <option value="no_show">No Show</option>
+                            <option value="rescheduled">Rescheduled</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                        @error('process_status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">Kesimpulan Medis Dasar</span></label>
@@ -192,6 +265,7 @@
                             <option value="fit_with_notes">Fit With Notes</option>
                             <option value="temporary_unfit">Temporary Unfit</option>
                             <option value="unfit">Unfit</option>
+                            <option value="not_examined">Tidak Diperiksa (N/A)</option>
                         </select>
                         @error('medical_status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                     </div>

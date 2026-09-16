@@ -19,6 +19,20 @@ class McuRecord extends Model
     protected $table = 'mcu_records';
     protected $guarded = [];
 
+    // Attendance Statuses
+    public const ATTENDANCE_SCHEDULED = 'scheduled';
+    public const ATTENDANCE_PRESENT = 'present';
+    public const ATTENDANCE_ABSENT = 'absent';
+    public const ATTENDANCE_RESCHEDULED = 'rescheduled';
+    public const ATTENDANCE_CANCELLED = 'cancelled';
+
+    // Process Statuses
+    public const PROCESS_SCHEDULED = 'scheduled';
+    public const PROCESS_COMPLETED = 'completed';
+    public const PROCESS_NO_SHOW = 'no_show';
+    public const PROCESS_RESCHEDULED = 'rescheduled';
+    public const PROCESS_EXPIRED = 'expired';
+
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()

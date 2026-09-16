@@ -16,7 +16,8 @@ class EmployeeMcuDetail extends Component
     public $showAddModal = false;
     public $mcu_year;
     public $mcu_date;
-    public $status = 'Completed';
+    public $attendance_status = 'scheduled';
+    public $process_status = 'scheduled';
     public $medical_status = 'fit_to_work'; // from McuResult
     public $doctor_notes = '';
 
@@ -32,7 +33,7 @@ class EmployeeMcuDetail extends Component
 
     public function openAddModal()
     {
-        $this->reset(['editingRecordId', 'mcu_year', 'mcu_date', 'status', 'medical_status', 'doctor_notes']);
+        $this->reset(['editingRecordId', 'mcu_year', 'mcu_date', 'attendance_status', 'process_status', 'medical_status', 'doctor_notes']);
         $this->mcu_year = date('Y');
         $this->mcu_date = date('Y-m-d');
         $this->showAddModal = true;
@@ -44,7 +45,8 @@ class EmployeeMcuDetail extends Component
         $this->editingRecordId = $record->id;
         $this->mcu_year = $record->mcu_year;
         $this->mcu_date = $record->mcu_date;
-        $this->status = $record->status;
+        $this->attendance_status = $record->attendance_status;
+        $this->process_status = $record->process_status;
         $this->medical_status = $record->result ? $record->result->status : 'fit_to_work';
         $this->doctor_notes = $record->result ? $record->result->doctor_notes : '';
         $this->showAddModal = true;
@@ -74,7 +76,8 @@ class EmployeeMcuDetail extends Component
         $this->validate([
             'mcu_year' => 'required|numeric',
             'mcu_date' => 'required|date',
-            'status' => 'required|string',
+            'attendance_status' => 'required|string',
+            'process_status' => 'required|string',
             'medical_status' => 'required|string',
             'doctor_notes' => 'nullable|string',
         ]);
@@ -89,7 +92,8 @@ class EmployeeMcuDetail extends Component
                 $record->update([
                     'mcu_year' => $this->mcu_year,
                     'mcu_date' => $this->mcu_date,
-                    'status' => $this->status,
+                    'attendance_status' => $this->attendance_status,
+                    'process_status' => $this->process_status,
                 ]);
 
                 if ($record->result) {
@@ -112,7 +116,8 @@ class EmployeeMcuDetail extends Component
                     'employee_id' => $this->employeeId,
                     'mcu_year' => $this->mcu_year,
                     'mcu_date' => $this->mcu_date,
-                    'status' => $this->status,
+                    'attendance_status' => $this->attendance_status,
+                    'process_status' => $this->process_status,
                     'notification_status' => 'notified',
                 ]);
 

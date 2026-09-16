@@ -52,6 +52,14 @@ class EmployeeMcuDetail extends Component
         $this->showAddModal = true;
     }
 
+    public function updatedAttendanceStatus($value)
+    {
+        if ($value === 'absent') {
+            $this->process_status = 'rescheduled';
+            $this->medical_status = 'not_examined';
+        }
+    }
+
     public function closeAddModal()
     {
         $this->showAddModal = false;

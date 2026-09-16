@@ -99,10 +99,9 @@
 
                                 // Masa Berlaku
                                 // Only the most recent 'Completed' & 'Present' MCU might be Active.
-                                // If the record is older, or if it's absent, it's N/A or Expired.
                                 $isLatestValid = ($index === 0 && $record->process_status === 'completed' && $record->attendance_status === 'present');
-                                $validityBadge = 'badge-ghost';
-                                $validityText = 'N/A';
+                                $validityBadge = 'badge-error';
+                                $validityText = 'Expired';
                                 
                                 if ($record->attendance_status === 'present' && $record->process_status === 'completed') {
                                     if ($isLatestValid) {
@@ -110,9 +109,6 @@
                                         $isExpired = \Carbon\Carbon::today()->gt($nextDate);
                                         $validityBadge = $isExpired ? 'badge-error' : 'badge-success';
                                         $validityText = $isExpired ? 'Expired' : 'Active';
-                                    } else {
-                                        $validityBadge = 'badge-error';
-                                        $validityText = 'Expired';
                                     }
                                 }
                             @endphp
@@ -238,11 +234,9 @@
                     </div>
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">Kehadiran (Attendance)</span></label>
-                        <select wire:model="attendance_status" class="select select-bordered">
-                            <option value="scheduled">Scheduled</option>
+                        <select wire:model.live="attendance_status" class="select select-bordered">
                             <option value="present">Present (Hadir)</option>
                             <option value="absent">Absent (Tidak Hadir)</option>
-                            <option value="rescheduled">Rescheduled</option>
                             <option value="cancelled">Cancelled</option>
                         </select>
                         @error('attendance_status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror

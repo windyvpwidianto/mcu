@@ -57,6 +57,9 @@ class EmployeeMcuDetail extends Component
         if ($value === 'absent') {
             $this->process_status = 'rescheduled';
             $this->medical_status = 'not_examined';
+        } elseif ($value === 'scheduled') {
+            $this->process_status = 'scheduled';
+            $this->medical_status = 'not_examined';
         }
     }
 

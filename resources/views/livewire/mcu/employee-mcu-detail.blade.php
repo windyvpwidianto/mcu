@@ -86,7 +86,6 @@
                                 };
                                 $attendanceText = ucwords(str_replace('_', ' ', $record->attendance_status ?? 'Scheduled'));
 
-                                // Status Proses
                                 $processBadge = match($record->process_status) {
                                     'completed' => 'badge-success',
                                     'no_show' => 'badge-error',
@@ -95,7 +94,7 @@
                                     'scheduled' => 'badge-info',
                                     default => 'badge-ghost',
                                 };
-                                $processText = ucwords(str_replace('_', ' ', $record->process_status ?? 'Scheduled'));
+                                $processText = $record->process_status === 'scheduled' ? 'Waiting' : ucwords(str_replace('_', ' ', $record->process_status ?? 'Scheduled'));
 
                                 // Masa Berlaku
                                 // Only the most recent 'Completed' & 'Present' MCU might be Active.
@@ -103,7 +102,10 @@
                                 $validityBadge = 'badge-error';
                                 $validityText = 'Expired';
                                 
-                                if ($record->attendance_status === 'present' && $record->process_status === 'completed') {
+                                if ($record->attendance_status === 'scheduled') {
+                                    $validityBadge = 'badge-ghost';
+                                    $validityText = '-';
+                                } elseif ($record->attendance_status === 'present' && $record->process_status === 'completed') {
                                     if ($isLatestValid) {
                                         $nextDate = \Carbon\Carbon::parse($employee->next_mcu_date);
                                         $isExpired = \Carbon\Carbon::today()->gt($nextDate);
@@ -130,7 +132,9 @@
                                     @endif
                                 </td>
                                 <td>
-                                    @if($record->attendance_status === 'absent' || $record->process_status === 'no_show')
+                                    @if($record->attendance_status === 'scheduled')
+                                        <span class="text-base-content/40 italic font-semibold">-</span>
+                                    @elseif($record->attendance_status === 'absent' || $record->process_status === 'no_show')
                                         <span class="text-base-content/40 italic font-semibold">N/A (Tidak Diperiksa)</span>
                                     @elseif(!$record->result)
                                         <span class="text-base-content/40 italic">Menunggu Hasil</span>

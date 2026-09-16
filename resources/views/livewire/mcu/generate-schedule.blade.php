@@ -83,9 +83,7 @@
                 </thead>
                 <tbody>
                     @forelse($employees as $employee)
-                        @php
-                            $latestMcu = $employee->mcuRecords->first();
-                        @endphp
+
                         <tr class="hover">
                             <td>
                                 <div class="flex items-center space-x-3">
@@ -104,9 +102,12 @@
                                 <div class="badge badge-ghost badge-sm">{{ $employee->department_name ?? '-' }}</div>
                             </td>
                             <td>
-                                @if($latestMcu)
-                                    <div class="font-semibold">{{ $latestMcu->mcu_year ?? '-' }}</div>
-                                    <div class="text-xs badge {{ $latestMcu->status == 'Completed' ? 'badge-success' : 'badge-warning' }} badge-outline mt-1">{{ $latestMcu->status }}</div>
+                                @php
+                                    $lastMcuRecord = $employee->mcuRecords->where('process_status', 'completed')->where('attendance_status', 'present')->sortByDesc('mcu_date')->first();
+                                @endphp
+                                @if($lastMcuRecord)
+                                    <div class="font-semibold">{{ \Carbon\Carbon::parse($lastMcuRecord->mcu_date)->translatedFormat('d F Y') }}</div>
+                                    <div class="text-xs badge badge-success badge-outline mt-1">Completed</div>
                                 @else
                                     <span class="text-xs text-base-content/40 italic">Belum ada riwayat</span>
                                 @endif

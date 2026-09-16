@@ -235,6 +235,7 @@
                     <div class="form-control">
                         <label class="label"><span class="label-text font-semibold">Kehadiran (Attendance)</span></label>
                         <select wire:model.live="attendance_status" class="select select-bordered">
+                            <option value="scheduled">Menunggu Pelaksanaan</option>
                             <option value="present">Present (Hadir)</option>
                             <option value="absent">Absent (Tidak Hadir)</option>
                             <option value="cancelled">Cancelled</option>

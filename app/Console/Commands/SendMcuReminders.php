@@ -57,7 +57,7 @@ class SendMcuReminders extends Command
                 // EXPIRED
                 // Pastikan belum dire-schedule (status != Rescheduled atau Pending sesudah expiry date)
                 $hasRescheduled = $user->mcuRecords()
-                                       ->whereIn('status', ['Rescheduled', 'Pending'])
+                                       ->whereIn('process_status', ['rescheduled', 'scheduled'])
                                        ->whereDate('created_at', '>=', $nextMcu)
                                        ->exists();
                 
@@ -112,13 +112,28 @@ class SendMcuReminders extends Command
             ]);
 
             if ($stage === 'MCU_EXPIRED') {
-                // Auto create rescheduled record
-                McuRecord::create([
+                // Auto create expired/rescheduled record
+                $expiredRecord = McuRecord::create([
                     'employee_id' => $user->id,
                     'mcu_year' => $today->year,
                     'mcu_date' => $today->toDateString(),
-                    'status' => 'Rescheduled',
+                    'attendance_status' => 'absent',
+                    'process_status' => 'rescheduled',
+                    'notification_status' => 'notified',
                 ]);
+                
+                // Auto reschedule + 3 months
+                $newDate = $today->copy()->addMonths(3);
+                $newRecord = McuRecord::create([
+                    'employee_id' => $user->id,
+                    'mcu_year' => $newDate->year,
+                    'mcu_date' => $newDate->toDateString(),
+                    'attendance_status' => 'scheduled',
+                    'process_status' => 'scheduled',
+                    'notification_status' => 'pending',
+                ]);
+                
+                $expiredRecord->update(['rescheduled_to_id' => $newRecord->id]);
                 
                 SendMcuExpiredWhatsAppJob::dispatch($user, $nextMcu->toDateString());
             } else {
@@ -154,18 +169,33 @@ class SendMcuReminders extends Command
             if ($stage === 'MCU_EXPIRED') {
                 $expiredEmployees = [];
                 foreach ($users as $u) {
-                    // Auto create rescheduled record
-                    McuRecord::create([
+                    // Auto create expired/rescheduled record
+                    $expiredRecord = McuRecord::create([
                         'employee_id' => $u->id,
                         'mcu_year' => $today->year,
                         'mcu_date' => $today->toDateString(),
-                        'status' => 'Rescheduled',
+                        'attendance_status' => 'absent',
+                        'process_status' => 'rescheduled',
+                        'notification_status' => 'notified',
                     ]);
+
+                    // Auto reschedule + 3 months
+                    $newDate = $today->copy()->addMonths(3);
+                    $newRecord = McuRecord::create([
+                        'employee_id' => $u->id,
+                        'mcu_year' => $newDate->year,
+                        'mcu_date' => $newDate->toDateString(),
+                        'attendance_status' => 'scheduled',
+                        'process_status' => 'scheduled',
+                        'notification_status' => 'pending',
+                    ]);
+                    
+                    $expiredRecord->update(['rescheduled_to_id' => $newRecord->id]);
 
                     $expiredEmployees[] = [
                         'name' => $u->name,
                         'employee_id' => $u->employee_id,
-                        'last_mcu_date' => $u->mcuRecords()->whereIn('status', ['Completed'])->latest('mcu_date')->value('mcu_date'),
+                        'last_mcu_date' => $u->mcuRecords()->whereIn('process_status', ['completed'])->latest('mcu_date')->value('mcu_date'),
                         'next_mcu_date' => $u->next_mcu_date
                     ];
                 }

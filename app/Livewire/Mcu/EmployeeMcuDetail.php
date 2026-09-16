@@ -142,6 +142,35 @@ class EmployeeMcuDetail extends Component
                 $msg = 'Riwayat MCU berhasil ditambahkan.';
             }
 
+            // --- Logika Otomatis Reschedule ---
+            if ($record->process_status === 'rescheduled' && null === $record->rescheduled_to_id) {
+                $newDate = \Carbon\Carbon::parse($record->mcu_date)->addMonths(3);
+                
+                $newRecord = McuRecord::create([
+                    'employee_id' => $record->employee_id,
+                    'mcu_year' => $newDate->year,
+                    'mcu_date' => $newDate->toDateString(),
+                    'attendance_status' => 'scheduled',
+                    'process_status' => 'scheduled',
+                    'notification_status' => 'pending',
+                ]);
+
+                $newRecord->result()->create([
+                    'status' => 'not_examined',
+                    'workflow_status' => 'reviewed',
+                ]);
+
+                $record->update(['rescheduled_to_id' => $newRecord->id]);
+
+                $userToNotify = User::with('contractors')->find($record->employee_id);
+                if ($userToNotify) {
+                    $userToNotify->notify(new \App\Notifications\McuRescheduledNotification($newRecord));
+                }
+                
+                $msg .= ' (Jadwal Reschedule berhasil dibuat untuk ' . $newDate->translatedFormat('d F Y') . ')';
+            }
+            // ----------------------------------
+
             DB::commit();
 
             $this->closeAddModal();

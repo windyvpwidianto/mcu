@@ -67,4 +67,14 @@ class McuRecord extends Model
     {
         return $this->hasOne(McuResult::class);
     }
+
+    public function rescheduledTo(): BelongsTo
+    {
+        return $this->belongsTo(McuRecord::class, 'rescheduled_to_id');
+    }
+
+    public function originalRecord(): HasOne
+    {
+        return $this->hasOne(McuRecord::class, 'rescheduled_to_id');
+    }
 }

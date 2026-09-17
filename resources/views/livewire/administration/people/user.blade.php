@@ -49,7 +49,7 @@
                             <td class="flex gap-2">
                                 <!-- Edit -->
                                 <x-button.btn-tooltip color="warning" icon="edit" href="{{ route('people.details', $user->id) }}" tooltip="Details" />
-                                <x-button.btn-tooltip color="error" icon="delete" modalId="delete_modal" tooltip="Hapus" />
+                                <x-button.btn-tooltip color="error" icon="delete" modalId="delete_modal" wireClick="confirmDelete({{ $user->id }})" tooltip="Hapus" />
 
                                 <!-- Delete -->
 

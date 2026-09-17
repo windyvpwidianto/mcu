@@ -18,24 +18,21 @@
         </div>
         
         <div class="flex items-center gap-2">
-            <!-- Tombol kustom yang men-trigger modal add-people -->
-            <button x-data @click="$dispatch('open-my-modal')" class="btn btn-outline btn-primary btn-sm md:btn-md gap-2 shadow-sm hover:shadow">
+            <!-- Tombol Tambah Peserta Manual -->
+            <button wire:click="openManualModal" class="btn btn-outline btn-primary btn-sm md:btn-md gap-2 shadow-sm hover:shadow">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
                 Tambah Peserta
             </button>
             
-            <!-- Component diletakkan di sini tapi tombol aslinya kita sembunyikan via CSS (hanya modalnya yang dirender) -->
-            <style>
-                .hide-add-btn > section > label.btn-info {
-                    display: none !important;
-                }
-            </style>
-            <div class="hide-add-btn">
-                <livewire:people.add-people />
-            </div>
             @if(auth()->user()->hasRole('administrator') || auth()->user()->hasRole('medical staff'))
+            <button wire:click="openImportPesertaModal" class="btn btn-secondary btn-sm md:btn-md gap-2 shadow-sm hover:shadow">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Import Peserta
+            </button>
             <button wire:click="openImportModal" class="btn btn-primary btn-sm md:btn-md gap-2 shadow-sm hover:shadow">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
@@ -254,6 +251,198 @@
                         </button>
                     @else
                         <button wire:click="resetImport" class="btn btn-primary shadow-md hover:shadow-lg transition-all">
+                            Import File Lain
+                        </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+    
+    <!-- Modal Tambah Peserta Manual -->
+    @if ($showManualModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in-down">
+            <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+                <form wire:submit.prevent="savePesertaManual" class="flex flex-col h-full">
+                    <!-- Header Modal -->
+                    <div class="flex justify-between items-center p-5 border-b border-gray-100">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                            </svg>
+                            Tambah Peserta Manual
+                        </h3>
+                        <button type="button" wire:click="closeManualModal" class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:bg-gray-100">✕</button>
+                    </div>
+
+                    <!-- Body Modal -->
+                    <div class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">NIK (ID Badge) <span class="text-error">*</span></span></label>
+                            <input type="text" wire:model="manual_nik" class="input input-bordered w-full" required />
+                            @error('manual_nik') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">Nama Lengkap <span class="text-error">*</span></span></label>
+                            <input type="text" wire:model="manual_name" class="input input-bordered w-full" required />
+                            @error('manual_name') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">Tanggal Lahir <span class="text-error">*</span></span></label>
+                            <input type="date" wire:model="manual_dob" class="input input-bordered w-full" required />
+                            @error('manual_dob') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">Nomor HP <span class="text-error">*</span></span></label>
+                            <input type="text" wire:model="manual_hp" class="input input-bordered w-full" required />
+                            @error('manual_hp') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">Departemen <span class="text-error">*</span></span></label>
+                            <input type="text" wire:model="manual_dept" class="input input-bordered w-full" required />
+                            @error('manual_dept') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">Jenis Karyawan <span class="text-error">*</span></span></label>
+                            <select wire:model="manual_jenis" class="select select-bordered w-full" required>
+                                <option value="">-- Pilih Jenis --</option>
+                                <option value="department">Internal (Department)</option>
+                                <option value="contractor">Kontraktor (Contractor)</option>
+                            </select>
+                            @error('manual_jenis') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+                    </div>
+
+                    <!-- Footer Modal -->
+                    <div class="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
+                        <button type="button" wire:click="closeManualModal" class="btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-200">Batal</button>
+                        <button type="submit" class="btn btn-primary shadow-md hover:shadow-lg transition-all" wire:loading.attr="disabled">
+                            <span wire:loading.remove wire:target="savePesertaManual">Simpan</span>
+                            <span wire:loading wire:target="savePesertaManual" class="flex items-center gap-2">
+                                <span class="loading loading-spinner loading-sm"></span> Menyimpan...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Import Peserta Excel -->
+    @if ($showImportPesertaModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in-down">
+            <div class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+                
+                <!-- Header Modal -->
+                <div class="flex justify-between items-center p-5 border-b border-gray-100">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                        </svg>
+                        Import Master Peserta MCU
+                    </h3>
+                    <button wire:click="closeImportPesertaModal" class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:bg-gray-100">✕</button>
+                </div>
+
+                <!-- Body Modal -->
+                <div class="p-5 overflow-y-auto custom-scrollbar flex-1">
+                    
+                    @if(is_null($importPesertaResults))
+                        <div class="alert alert-info bg-secondary/10 text-secondary border-secondary/20 mb-5 shadow-sm">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="stroke-current shrink-0 w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            <div class="flex-1">
+                                <h3 class="font-bold">Informasi Import:</h3>
+                                <div class="text-sm">
+                                    Silakan gunakan format Excel yang disediakan. Jika NIK sudah ada, sistem akan melakukan update data otomatis.
+                                </div>
+                            </div>
+                            <button wire:click="downloadTemplate" class="btn btn-sm btn-secondary ml-2">Download Template</button>
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label">
+                                <span class="label-text font-semibold text-gray-700">Pilih File Excel (.xls, .xlsx)</span>
+                            </label>
+                            <input type="file" wire:model="pesertaExcelFile" class="file-input file-input-bordered file-input-secondary w-full bg-gray-50" accept=".xls,.xlsx" />
+                            @error('pesertaExcelFile') 
+                                <span class="text-error text-sm mt-2 flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    {{ $message }}
+                                </span> 
+                            @enderror
+                        </div>
+
+                        <div wire:loading wire:target="pesertaExcelFile" class="mt-3 text-sm text-secondary flex items-center gap-2">
+                            <span class="loading loading-spinner loading-sm"></span> Mengunggah file...
+                        </div>
+                    @else
+                        <!-- Tampilan Hasil Import Peserta -->
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-green-50 p-4 rounded-xl border border-green-100 text-center shadow-sm">
+                                <div class="text-2xl font-bold text-green-600">{{ $importPesertaResults['success'] }}</div>
+                                <div class="text-xs text-green-700 uppercase tracking-wide mt-1">Sukses (Baru)</div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-100 text-center shadow-sm">
+                                <div class="text-2xl font-bold text-blue-600">{{ $importPesertaResults['duplicate_updated'] }}</div>
+                                <div class="text-xs text-blue-700 uppercase tracking-wide mt-1">Di-Update</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-xl border border-red-100 text-center shadow-sm">
+                                <div class="text-2xl font-bold text-red-600">{{ $importPesertaResults['failed'] }}</div>
+                                <div class="text-xs text-red-700 uppercase tracking-wide mt-1">Gagal</div>
+                            </div>
+                        </div>
+
+                        @if(count($importPesertaErrors) > 0)
+                            <div class="mt-2">
+                                <h4 class="font-bold text-red-600 mb-3 flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                    </svg>
+                                    Daftar Baris Error ({{ count($importPesertaErrors) }})
+                                </h4>
+                                <div class="overflow-x-auto border border-red-100 rounded-lg shadow-inner bg-red-50/30 max-h-60">
+                                    <table class="table table-sm table-pin-rows">
+                                        <thead>
+                                            <tr class="bg-red-100 text-red-800">
+                                                <th class="w-16">Baris</th>
+                                                <th class="w-32">NIK</th>
+                                                <th>Alasan Gagal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($importPesertaErrors as $error)
+                                                <tr class="hover:bg-red-50">
+                                                    <td class="font-mono text-center">{{ $error['row'] }}</td>
+                                                    <td class="font-mono">{{ $error['nik'] }}</td>
+                                                    <td class="text-sm text-red-700">{{ $error['reason'] }}</td>
+                                                </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+
+                <!-- Footer Modal -->
+                <div class="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
+                    <button wire:click="closeImportPesertaModal" class="btn btn-outline border-gray-300 text-gray-700 hover:bg-gray-200 hover:border-gray-400">Tutup</button>
+                    
+                    @if(is_null($importPesertaResults))
+                        <button wire:click="importPesertaExcel" class="btn btn-secondary shadow-md hover:shadow-lg transition-all" wire:loading.attr="disabled" {{ empty($pesertaExcelFile) ? 'disabled' : '' }}>
+                            <span wire:loading.remove wire:target="importPesertaExcel">Mulai Import</span>
+                            <span wire:loading wire:target="importPesertaExcel" class="flex items-center gap-2">
+                                <span class="loading loading-spinner loading-sm"></span> Memproses...
+                            </span>
+                        </button>
+                    @else
+                        <button wire:click="resetImportPeserta" class="btn btn-secondary shadow-md hover:shadow-lg transition-all">
                             Import File Lain
                         </button>
                     @endif

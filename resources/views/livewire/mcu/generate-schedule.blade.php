@@ -90,7 +90,7 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="font-bold">{{ $employee->name }}</div>
+                                        <div class="font-bold">{{ $employee->formatted_name }}</div>
                                         <div class="text-xs font-mono opacity-60">ID Badge: {{ $employee->employee_id ?? '-' }}</div>
                                     </div>
                                 </div>

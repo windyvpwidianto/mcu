@@ -40,7 +40,7 @@
                             <td>
                                 <input type="checkbox" value="{{ $user->id }}" wire:model.live="selectedUsers">
                             </td>
-                            <td>{{ $user->name }}</td>
+                            <td>{{ $user->formatted_name }}</td>
                             <td>{{ $user->gender }}</td>
                             <td>{{ $user->username }}</td>
                             <td>{{ $user->department_name }}</td>

@@ -73,6 +73,20 @@ class User extends Authenticatable implements LdapAuthenticatable
             ->map(fn($word) => Str::substr($word, 0, 1))
             ->implode('');
     }
+
+    /**
+     * Get the user's formatted name (Last Name, First Name)
+     */
+    public function getFormattedNameAttribute(): string
+    {
+        $parts = explode(' ', trim($this->name));
+        if (count($parts) > 1) {
+            $lastName = array_pop($parts);
+            $firstName = implode(' ', $parts);
+            return $lastName . ', ' . $firstName;
+        }
+        return $this->name;
+    }
     protected static function booted()
     {
         static::creating(function ($user) {

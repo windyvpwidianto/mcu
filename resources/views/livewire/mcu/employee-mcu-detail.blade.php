@@ -20,7 +20,7 @@
                 </div>
             </div>
             <div class="flex-1 text-center md:text-left">
-                <h2 class="text-2xl font-bold">{{ $employee->name }}</h2>
+                <h2 class="text-2xl font-bold text-gray-800">{{ $employee->formatted_name }}</h2>
                 <div class="text-base-content/60 font-mono mt-1">ID Badge: {{ $employee->employee_id ?? '-' }}</div>
                 
                 <div class="flex flex-wrap justify-center md:justify-start gap-2 mt-4">

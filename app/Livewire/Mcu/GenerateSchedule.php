@@ -577,12 +577,15 @@ class GenerateSchedule extends Component
 
         $departments = User::select('department_name')->distinct()->whereNotNull('department_name')->pluck('department_name');
         
+        $allDepartments = \App\Models\Department::pluck('department_name');
+        
         // List of years for filter (from mcu_records)
         $years = McuRecord::select('mcu_year')->distinct()->whereNotNull('mcu_year')->orderBy('mcu_year', 'desc')->pluck('mcu_year');
 
         return view('livewire.mcu.generate-schedule', [
             'employees' => $employees,
             'departments' => $departments,
+            'allDepartments' => $allDepartments,
             'years' => $years
         ]);
     }

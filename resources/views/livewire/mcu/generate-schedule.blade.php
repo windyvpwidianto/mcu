@@ -326,7 +326,12 @@
                                     @endif
                                 </span>
                             </label>
-                            <input type="text" wire:model="manual_dept" class="input input-bordered w-full" @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN') required @endif />
+                            <input type="text" list="department-list" wire:model="manual_dept" class="input input-bordered w-full" @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN') required @endif />
+                            <datalist id="department-list">
+                                @foreach($allDepartments as $deptName)
+                                    <option value="{{ $deptName }}"></option>
+                                @endforeach
+                            </datalist>
                             @error('manual_dept') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                         </div>
 

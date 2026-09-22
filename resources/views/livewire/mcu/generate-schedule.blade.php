@@ -33,11 +33,11 @@
                 </svg>
                 Import Peserta
             </button>
-            <button wire:click="openImportModal" class="btn btn-primary btn-sm md:btn-md gap-2 shadow-sm hover:shadow">
+            <button wire:click="openImportHistoryModal" class="btn btn-primary btn-sm md:btn-md gap-2 shadow-sm hover:shadow">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                Import Data Historis
+                Import Data History
             </button>
             @endif
         </div>
@@ -602,6 +602,135 @@
                         <button wire:click="resetImportPeserta" class="btn btn-secondary shadow-md hover:shadow-lg transition-all">
                             Import File Lain
                         </button>
+                    @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    {{-- Import MCU History Modal --}}
+    @if($showImportHistoryModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" wire:click.self="closeImportHistoryModal">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 flex flex-col" style="max-height: 90vh;">
+
+                <!-- Header Modal -->
+                <div class="flex items-center justify-between p-5 border-b border-gray-100">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 rounded-lg bg-primary/10">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-gray-800">Import Data History MCU</h3>
+                    </div>
+                    <button type="button" wire:click="closeImportHistoryModal" class="btn btn-sm btn-circle btn-ghost text-gray-500 hover:bg-gray-100">✕</button>
+                </div>
+
+                <!-- Body Modal -->
+                <div class="p-5 overflow-y-auto flex-1 space-y-5">
+
+                    <!-- Info Format -->
+                    <div class="alert alert-info text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div>
+                            <p><strong>Format Excel yang diperlukan:</strong></p>
+                            <p>Header kolom: <code class="bg-blue-100 px-1 rounded">employee_id</code>, <code class="bg-blue-100 px-1 rounded">full_name</code>, <code class="bg-blue-100 px-1 rounded">2023</code>, <code class="bg-blue-100 px-1 rounded">2024</code>, <code class="bg-blue-100 px-1 rounded">2025</code>, <code class="bg-blue-100 px-1 rounded">2026</code></p>
+                            <p class="mt-1">Isi kolom tahun dengan <strong>tanggal MCU</strong> (format: YYYY-MM-DD atau DD/MM/YYYY). Kosongkan jika tidak ada MCU di tahun tersebut.</p>
+                        </div>
+                    </div>
+
+                    <!-- Download Template -->
+                    <div class="flex justify-between items-center p-4 bg-base-100 rounded-xl border border-base-200">
+                        <div>
+                            <p class="font-semibold text-gray-700">Unduh Template Excel</p>
+                            <p class="text-sm text-gray-500">Gunakan template ini agar format sesuai.</p>
+                        </div>
+                        <button wire:click="downloadHistoryTemplate" class="btn btn-outline btn-sm gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Download Template
+                        </button>
+                    </div>
+
+                    <!-- Upload -->
+                    @if(is_null($importHistoryResults))
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">File Excel (.xlsx / .xls)</span></label>
+                            <input type="file" wire:model="historyExcelFile" accept=".xlsx,.xls"
+                                class="file-input file-input-bordered w-full {{ $errors->has('historyExcelFile') ? 'file-input-error' : '' }}" />
+                            @error('historyExcelFile') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                            <div wire:loading wire:target="historyExcelFile" class="mt-2 text-sm text-info">
+                                ⏳ Mengunggah file...
+                            </div>
+                        </div>
+                    @else
+                        <!-- Results -->
+                        <div class="rounded-xl border border-base-200 overflow-hidden">
+                            <div class="p-4 bg-base-200 font-semibold text-gray-700">Hasil Import</div>
+                            <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y divide-base-200">
+                                <div class="p-4 text-center">
+                                    <p class="text-2xl font-bold text-success">{{ $importHistoryResults['success'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">Record Baru</p>
+                                </div>
+                                <div class="p-4 text-center">
+                                    <p class="text-2xl font-bold text-info">{{ $importHistoryResults['skipped'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">Diupdate/Dilewati</p>
+                                </div>
+                                <div class="p-4 text-center">
+                                    <p class="text-2xl font-bold text-warning">{{ $importHistoryResults['user_not_found'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">Employee Tidak Ditemukan</p>
+                                </div>
+                                <div class="p-4 text-center">
+                                    <p class="text-2xl font-bold text-base-content">{{ $importHistoryResults['processed'] }}</p>
+                                    <p class="text-xs text-gray-500 mt-1">Baris Diproses</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if(count($importHistoryErrors) > 0)
+                            <div class="mt-3">
+                                <p class="font-semibold text-error mb-2">Daftar Error ({{ count($importHistoryErrors) }}):</p>
+                                <div class="overflow-auto max-h-48 rounded-xl border border-red-200">
+                                    <table class="table table-xs w-full">
+                                        <thead class="bg-red-50">
+                                            <tr>
+                                                <th>Baris</th>
+                                                <th>Employee ID</th>
+                                                <th>Alasan</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach($importHistoryErrors as $err)
+                                            <tr>
+                                                <td>{{ $err['row'] }}</td>
+                                                <td>{{ $err['emp_id'] }}</td>
+                                                <td class="text-error">{{ $err['reason'] }}</td>
+                                            </tr>
+                                            @endforeach
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        @endif
+                    @endif
+                </div>
+
+                <!-- Footer Modal -->
+                <div class="p-5 border-t border-gray-100 bg-gray-50 flex justify-end gap-3 rounded-b-2xl">
+                    <button wire:click="closeImportHistoryModal" class="btn btn-outline border-gray-300 text-gray-700">Tutup</button>
+
+                    @if(is_null($importHistoryResults))
+                        <button wire:click="importHistory" class="btn btn-primary shadow-md" wire:loading.attr="disabled" {{ empty($historyExcelFile) ? 'disabled' : '' }}>
+                            <span wire:loading.remove wire:target="importHistory">Mulai Import</span>
+                            <span wire:loading wire:target="importHistory" class="flex items-center gap-2">
+                                <span class="loading loading-spinner loading-sm"></span> Memproses...
+                            </span>
+                        </button>
+                    @else
+                        <button wire:click="$set('importHistoryResults', null)" class="btn btn-primary shadow-md">Import File Lain</button>
                     @endif
                 </div>
             </div>

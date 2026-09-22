@@ -11,7 +11,9 @@ use Livewire\WithFileUploads;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\McuScheduleImport;
 use App\Imports\PesertaMcuImport;
+use App\Imports\McuHistoryImport;
 use App\Exports\PesertaMcuTemplateExport;
+use App\Exports\McuHistoryTemplateExport;
 use App\Models\Role;
 use App\Models\Department;
 use App\Models\Contractor;
@@ -67,6 +69,13 @@ class GenerateSchedule extends Component
     public $showImportPesertaModal = false;
     public $importPesertaResults = null;
     public $importPesertaErrors = [];
+
+    // Import MCU History properties
+    public $historyExcelFile;
+    public $showImportHistoryModal = false;
+    public $importHistoryResults = null;
+    public $importHistoryErrors = [];
+    public $historyYears = [2023, 2024, 2025, 2026];
 
     public function updatingSearch()
     {
@@ -650,6 +659,198 @@ class GenerateSchedule extends Component
                 'reason' => 'Terjadi kesalahan sistem fatal (Rollback): ' . $e->getMessage()
             ];
             $this->importResults['failed']++;
+        }
+    }
+
+    public function openImportHistoryModal()
+    {
+        $this->reset(['historyExcelFile', 'importHistoryResults', 'importHistoryErrors']);
+        $this->showImportHistoryModal = true;
+    }
+
+    public function closeImportHistoryModal()
+    {
+        $this->showImportHistoryModal = false;
+        $this->reset(['historyExcelFile', 'importHistoryResults', 'importHistoryErrors']);
+    }
+
+    public function downloadHistoryTemplate()
+    {
+        return Excel::download(new McuHistoryTemplateExport, 'template_mcu_history.xlsx');
+    }
+
+    public function importHistory()
+    {
+        if (!auth()->user()->hasRole('administrator') && !auth()->user()->hasRole('medical staff')) {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $this->validate([
+            'historyExcelFile' => 'required|file|mimes:xlsx,xls|max:5120',
+        ], [
+            'historyExcelFile.required' => 'File Excel wajib diunggah.',
+            'historyExcelFile.mimes'    => 'Format file harus berupa .xlsx atau .xls.',
+            'historyExcelFile.max'      => 'Ukuran file maksimal 5MB.',
+        ]);
+
+        $this->importHistoryResults = [
+            'processed'       => 0,
+            'success'         => 0,
+            'skipped'         => 0,
+            'user_not_found'  => 0,
+        ];
+        $this->importHistoryErrors = [];
+
+        try {
+            $collections = Excel::toCollection(new McuHistoryImport, $this->historyExcelFile);
+
+            if ($collections->isEmpty() || $collections->first()->isEmpty()) {
+                $this->importHistoryErrors[] = [
+                    'row'    => '-',
+                    'emp_id' => '-',
+                    'reason' => 'File Excel kosong atau format tidak sesuai.',
+                ];
+                return;
+            }
+
+            $rows = $collections->first();
+
+            DB::beginTransaction();
+
+            // Detect year columns dynamically (any numeric key >= 2000)
+            $firstRow = $rows->first();
+            $yearColumns = [];
+            if ($firstRow) {
+                foreach ($firstRow->keys() as $key) {
+                    if (is_numeric($key) && (int)$key >= 2000 && (int)$key <= 2100) {
+                        $yearColumns[] = (int)$key;
+                    }
+                }
+            }
+
+            if (empty($yearColumns)) {
+                $yearColumns = $this->historyYears;
+            }
+
+            foreach ($rows as $index => $row) {
+                $rowNum    = $index + 2;
+                $employeeId = isset($row['employee_id']) ? trim($row['employee_id']) : null;
+                $fullName   = isset($row['full_name']) ? trim($row['full_name']) : null;
+
+                if (!$employeeId) {
+                    $this->importHistoryErrors[] = [
+                        'row'    => $rowNum,
+                        'emp_id' => '-',
+                        'reason' => 'employee_id kosong.',
+                    ];
+                    continue;
+                }
+
+                // Find user by employee_id (badge)
+                $user = User::where('employee_id', $employeeId)->first();
+
+                if (!$user) {
+                    // Optionally create the user from the import data
+                    if ($fullName) {
+                        $user = User::create([
+                            'employee_id' => $employeeId,
+                            'username'    => $employeeId,
+                            'name'        => $fullName,
+                            'password'    => Hash::make('password'),
+                            'pilih_divisi' => 'department',
+                        ]);
+                    } else {
+                        $this->importHistoryErrors[] = [
+                            'row'    => $rowNum,
+                            'emp_id' => $employeeId,
+                            'reason' => "Employee ID '$employeeId' tidak ditemukan di database.",
+                        ];
+                        $this->importHistoryResults['user_not_found']++;
+                        continue;
+                    }
+                }
+
+                // Update name if provided and different
+                if ($fullName && $user->name !== $fullName) {
+                    $user->update(['name' => $fullName]);
+                }
+
+                $this->importHistoryResults['processed']++;
+
+                // Process each year column
+                foreach ($yearColumns as $year) {
+                    $yearKey   = (string)$year;
+                    $dateValue = isset($row[$yearKey]) ? trim($row[$yearKey]) : null;
+
+                    if (empty($dateValue)) {
+                        continue; // No MCU record for this year
+                    }
+
+                    // Parse the date
+                    $mcuDate = null;
+                    try {
+                        // Handle Excel serial date number
+                        if (is_numeric($dateValue)) {
+                            $mcuDate = Carbon::createFromTimestamp(
+                                ($dateValue - 25569) * 86400
+                            )->format('Y-m-d');
+                        } else {
+                            $mcuDate = Carbon::parse($dateValue)->format('Y-m-d');
+                        }
+                    } catch (\Exception $e) {
+                        $this->importHistoryErrors[] = [
+                            'row'    => $rowNum,
+                            'emp_id' => $employeeId,
+                            'reason' => "Tahun $year: Format tanggal '$dateValue' tidak valid.",
+                        ];
+                        $this->importHistoryResults['skipped']++;
+                        continue;
+                    }
+
+                    // Check if record already exists for this year
+                    $existing = McuRecord::where('employee_id', $user->id)
+                        ->where('mcu_year', $year)
+                        ->first();
+
+                    if ($existing) {
+                        // Update existing record
+                        $existing->update([
+                            'mcu_date' => $mcuDate,
+                        ]);
+                        $this->importHistoryResults['skipped']++;
+                    } else {
+                        // Create new history record (without schedule link)
+                        McuRecord::create([
+                            'mcu_schedule_id'     => null,
+                            'employee_id'         => $user->id,
+                            'mcu_year'            => $year,
+                            'mcu_date'            => $mcuDate,
+                            'attendance_status'   => 'present',
+                            'process_status'      => 'completed',
+                            'notification_status' => 'notified',
+                        ]);
+                        $this->importHistoryResults['success']++;
+                    }
+                }
+            }
+
+            DB::commit();
+
+            $this->dispatch('alert', [
+                'text'            => "Import riwayat MCU selesai! {$this->importHistoryResults['success']} record baru, {$this->importHistoryResults['skipped']} diupdate/dilewati.",
+                'duration'        => 5000,
+                'close'           => true,
+                'backgroundColor' => 'linear-gradient(to right, #06b6d4, #22c55e)',
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('MCU History Import Error: ' . $e->getMessage());
+            $this->importHistoryErrors[] = [
+                'row'    => '-',
+                'emp_id' => '-',
+                'reason' => 'Kesalahan sistem: ' . $e->getMessage(),
+            ];
         }
     }
 

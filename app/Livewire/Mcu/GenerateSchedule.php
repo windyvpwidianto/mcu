@@ -687,22 +687,27 @@ class GenerateSchedule extends Component
         }
 
         $this->validate([
-            'historyExcelFile' => 'required|file|mimes:xlsx,xls|max:5120',
+            'historyExcelFile' => 'required|file|mimes:xlsx,xls|max:10240',
         ], [
             'historyExcelFile.required' => 'File Excel wajib diunggah.',
             'historyExcelFile.mimes'    => 'Format file harus berupa .xlsx atau .xls.',
-            'historyExcelFile.max'      => 'Ukuran file maksimal 5MB.',
+            'historyExcelFile.max'      => 'Ukuran file maksimal 10MB.',
         ]);
 
+        // Extend execution time for large files
+        set_time_limit(600);
+        ini_set('memory_limit', '512M');
+
         $this->importHistoryResults = [
-            'processed'       => 0,
-            'success'         => 0,
-            'skipped'         => 0,
-            'user_not_found'  => 0,
+            'processed'      => 0,
+            'success'        => 0,
+            'skipped'        => 0,
+            'user_not_found' => 0,
         ];
         $this->importHistoryErrors = [];
 
         try {
+            // Raw import — NO WithHeadingRow so year columns (2023, 2024...) are not mangled
             $collections = Excel::toCollection(new McuHistoryImport, $this->historyExcelFile);
 
             if ($collections->isEmpty() || $collections->first()->isEmpty()) {
@@ -714,29 +719,57 @@ class GenerateSchedule extends Component
                 return;
             }
 
-            $rows = $collections->first();
+            $allRows = $collections->first();
 
-            DB::beginTransaction();
+            if ($allRows->count() < 2) {
+                $this->importHistoryErrors[] = [
+                    'row'    => '-',
+                    'emp_id' => '-',
+                    'reason' => 'File hanya memiliki baris header, tidak ada data.',
+                ];
+                return;
+            }
 
-            // Detect year columns dynamically (any numeric key >= 2000)
-            $firstRow = $rows->first();
+            // First row is the header
+            $headerRow  = $allRows->first()->values();
+            $dataRows   = $allRows->slice(1); // skip header row
+
+            // Build column index map from header
+            // Expected: employee_id, full_name, 2023, 2024, 2025, 2026, ...
+            $colMap = [];
+            foreach ($headerRow as $colIndex => $colName) {
+                $colMap[strtolower(trim((string)$colName))] = $colIndex;
+            }
+
+            // Detect year columns from header
             $yearColumns = [];
-            if ($firstRow) {
-                foreach ($firstRow->keys() as $key) {
-                    if (is_numeric($key) && (int)$key >= 2000 && (int)$key <= 2100) {
-                        $yearColumns[] = (int)$key;
-                    }
+            foreach ($headerRow as $colIndex => $colName) {
+                $name = trim((string)$colName);
+                if (is_numeric($name) && (int)$name >= 2000 && (int)$name <= 2100) {
+                    $yearColumns[(int)$name] = $colIndex;
                 }
             }
 
             if (empty($yearColumns)) {
-                $yearColumns = $this->historyYears;
+                $yearColumns = array_flip($this->historyYears); // fallback
             }
 
-            foreach ($rows as $index => $row) {
-                $rowNum    = $index + 2;
-                $employeeId = isset($row['employee_id']) ? trim($row['employee_id']) : null;
-                $fullName   = isset($row['full_name']) ? trim($row['full_name']) : null;
+            // Pre-load all users into memory cache for speed
+            $userCache = User::select('id', 'employee_id', 'name')
+                ->get()
+                ->keyBy('employee_id');
+
+            DB::beginTransaction();
+
+            foreach ($dataRows as $index => $rawRow) {
+                $row    = $rawRow->values(); // convert to 0-indexed
+                $rowNum = $index + 2;
+
+                $empIdCol   = $colMap['employee_id'] ?? 0;
+                $fullNameCol = $colMap['full_name'] ?? 1;
+
+                $employeeId = isset($row[$empIdCol]) ? trim((string)$row[$empIdCol]) : null;
+                $fullName   = isset($row[$fullNameCol]) ? trim((string)$row[$fullNameCol]) : null;
 
                 if (!$employeeId) {
                     $this->importHistoryErrors[] = [
@@ -747,19 +780,19 @@ class GenerateSchedule extends Component
                     continue;
                 }
 
-                // Find user by employee_id (badge)
-                $user = User::where('employee_id', $employeeId)->first();
+                // Look up user from in-memory cache
+                $user = $userCache->get($employeeId);
 
                 if (!$user) {
-                    // Optionally create the user from the import data
                     if ($fullName) {
                         $user = User::create([
-                            'employee_id' => $employeeId,
-                            'username'    => $employeeId,
-                            'name'        => $fullName,
-                            'password'    => Hash::make('password'),
+                            'employee_id'  => $employeeId,
+                            'username'     => $employeeId,
+                            'name'         => $fullName,
+                            'password'     => Hash::make('password'),
                             'pilih_divisi' => 'department',
                         ]);
+                        $userCache->put($employeeId, $user);
                     } else {
                         $this->importHistoryErrors[] = [
                             'row'    => $rowNum,
@@ -771,38 +804,41 @@ class GenerateSchedule extends Component
                     }
                 }
 
-                // Update name if provided and different
+                // Update name if different
                 if ($fullName && $user->name !== $fullName) {
                     $user->update(['name' => $fullName]);
                 }
 
                 $this->importHistoryResults['processed']++;
 
-                // Process each year column
-                foreach ($yearColumns as $year) {
-                    $yearKey   = (string)$year;
-                    $dateValue = isset($row[$yearKey]) ? trim($row[$yearKey]) : null;
+                foreach ($yearColumns as $year => $colIndex) {
+                    $rawDate = isset($row[$colIndex]) ? $row[$colIndex] : null;
 
-                    if (empty($dateValue)) {
-                        continue; // No MCU record for this year
+                    // Skip empty
+                    if ($rawDate === null || $rawDate === '') {
+                        continue;
                     }
 
-                    // Parse the date
+                    // Parse date — use PhpSpreadsheet for Excel serial numbers (fast)
                     $mcuDate = null;
                     try {
-                        // Handle Excel serial date number
-                        if (is_numeric($dateValue)) {
-                            $mcuDate = Carbon::createFromTimestamp(
-                                ($dateValue - 25569) * 86400
-                            )->format('Y-m-d');
+                        $rawDate = trim((string)$rawDate);
+                        if (is_numeric($rawDate)) {
+                            // Excel serial date → PHP DateTime via PhpSpreadsheet
+                            $dateObj = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$rawDate);
+                            $mcuDate = $dateObj->format('Y-m-d');
                         } else {
-                            $mcuDate = Carbon::parse($dateValue)->format('Y-m-d');
+                            // String date — try common formats
+                            $mcuDate = date('Y-m-d', strtotime($rawDate));
+                            if (!$mcuDate || $mcuDate === '1970-01-01') {
+                                throw new \Exception("Cannot parse date: $rawDate");
+                            }
                         }
-                    } catch (\Exception $e) {
+                    } catch (\Exception $ex) {
                         $this->importHistoryErrors[] = [
                             'row'    => $rowNum,
                             'emp_id' => $employeeId,
-                            'reason' => "Tahun $year: Format tanggal '$dateValue' tidak valid.",
+                            'reason' => "Tahun $year: Format tanggal '$rawDate' tidak valid.",
                         ];
                         $this->importHistoryResults['skipped']++;
                         continue;
@@ -814,15 +850,13 @@ class GenerateSchedule extends Component
                         ->first();
 
                     if ($existing) {
-                        // Update existing record with correct statuses
                         $existing->update([
-                            'mcu_date'          => $mcuDate,
-                            'attendance_status' => 'present',
-                            'process_status'    => 'completed',
+                            'mcu_date'            => $mcuDate,
+                            'attendance_status'   => 'present',
+                            'process_status'      => 'completed',
                             'notification_status' => 'notified',
                         ]);
 
-                        // Upsert McuResult (Kesimpulan Medis Dasar)
                         McuResult::updateOrCreate(
                             ['mcu_record_id' => $existing->id],
                             [
@@ -834,7 +868,6 @@ class GenerateSchedule extends Component
 
                         $this->importHistoryResults['skipped']++;
                     } else {
-                        // Create new history record (without schedule link)
                         $newRecord = McuRecord::create([
                             'mcu_schedule_id'     => null,
                             'employee_id'         => $user->id,
@@ -845,7 +878,6 @@ class GenerateSchedule extends Component
                             'notification_status' => 'notified',
                         ]);
 
-                        // Create McuResult (Kesimpulan Medis Dasar = Fit To Work)
                         McuResult::create([
                             'mcu_record_id'   => $newRecord->id,
                             'status'          => 'fit_to_work',
@@ -869,7 +901,7 @@ class GenerateSchedule extends Component
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('MCU History Import Error: ' . $e->getMessage());
+            Log::error('MCU History Import Error: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
             $this->importHistoryErrors[] = [
                 'row'    => '-',
                 'emp_id' => '-',

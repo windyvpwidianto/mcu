@@ -34,6 +34,7 @@ class GenerateSchedule extends Component
     // Tambah Peserta Manual properties
     public $showManualModal = false;
     public $manual_nik = '';
+    public $manual_badge = '';
     public $manual_name = '';
     public $manual_dob = '';
     public $manual_hp = '';
@@ -90,7 +91,7 @@ class GenerateSchedule extends Component
 
     public function resetManualForm()
     {
-        $this->reset(['manual_nik', 'manual_name', 'manual_dob', 'manual_hp', 'manual_dept', 'manual_jenis']);
+        $this->reset(['manual_nik', 'manual_badge', 'manual_name', 'manual_dob', 'manual_hp', 'manual_dept', 'manual_jenis']);
         $this->resetValidation();
     }
 
@@ -124,69 +125,55 @@ class GenerateSchedule extends Component
 
         $this->validate([
             'manual_nik' => 'required|string|max:255',
+            'manual_badge' => 'required|string|max:255',
             'manual_name' => 'required|string|max:255',
             'manual_dob' => 'required|date',
             'manual_hp' => 'required|numeric',
-            'manual_dept' => 'required|string|max:255',
-            'manual_jenis' => 'required|string|in:department,contractor',
+            'manual_jenis' => 'required|string|in:MSM,TTN,contractor',
+            'manual_dept' => 'required_if:manual_jenis,MSM,TTN',
         ], [
             'manual_nik.required' => 'NIK wajib diisi.',
+            'manual_badge.required' => 'ID Badge wajib diisi.',
             'manual_name.required' => 'Nama Lengkap wajib diisi.',
             'manual_dob.required' => 'Tanggal Lahir wajib diisi.',
             'manual_hp.required' => 'Nomor HP wajib diisi.',
             'manual_hp.numeric' => 'Nomor HP harus berupa angka.',
-            'manual_dept.required' => 'Departemen wajib diisi.',
+            'manual_dept.required_if' => 'Departemen wajib diisi untuk karyawan internal.',
             'manual_jenis.required' => 'Jenis Karyawan wajib dipilih.',
+            'manual_jenis.in' => 'Jenis Karyawan tidak valid.',
         ]);
 
         try {
             DB::beginTransaction();
             
-            // Check if NIK already exists
-            $user = User::where('employee_id', $this->manual_nik)->first();
+            // Check if ID Badge already exists
+            $user = User::where('employee_id', $this->manual_badge)->first();
 
             if ($user) {
                 // Upsert/Update existing
                 $user->update([
+                    'nik' => $this->manual_nik,
                     'name' => $this->manual_name,
                     'date_birth' => $this->manual_dob,
-                    // If phone_number doesn't exist in DB schema, we might get an exception. 
-                    // To handle it safely, we should check if the column exists or just assume it does as confirmed by user.
-                    // Wait, the user said it exists, but we know it's not in our earlier schema listing. 
-                    // Let's assume there is a way they store it, maybe in `username` or we can try updating `username` as phone?
-                    // "nomor Hp sudah ada di database yang ada sekarang". Let's assume it's `phone_number` or they have it somehow.
-                    // Actually, if it's not `phone_number`, we should probably use a dynamic property or skip it if it fails.
-                    // I will add 'phone_number' and hope they added it manually. If it fails, I'll fix it.
-                    // But wait, the user's codebase in `User.php` doesn't have `phone_number` in fillable.
-                    // I must update `User.php` fillable array later!
+                    'phone_number' => $this->manual_hp,
                     'department_name' => $this->manual_dept,
                     'pilih_divisi' => $this->manual_jenis,
                 ]);
-                $message = 'Data peserta berhasil di-update berdasarkan NIK yang ada.';
+                $message = 'Data peserta berhasil di-update berdasarkan ID Badge yang ada.';
             } else {
                 // Create new
                 $user = User::create([
-                    'employee_id' => $this->manual_nik,
-                    'username' => $this->manual_nik, // Default username
+                    'employee_id' => $this->manual_badge,
+                    'nik' => $this->manual_nik,
+                    'username' => $this->manual_badge, // Default username
                     'name' => $this->manual_name,
                     'date_birth' => $this->manual_dob,
+                    'phone_number' => $this->manual_hp,
                     'department_name' => $this->manual_dept,
                     'pilih_divisi' => $this->manual_jenis,
                     'password' => Hash::make('password'), // Default password
                 ]);
                 $message = 'Data peserta baru berhasil ditambahkan.';
-            }
-            
-            // Add phone number if possible, since it's not in fillable we might need to save it directly
-            if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'phone_number')) {
-                $user->phone_number = $this->manual_hp;
-                $user->save();
-            } else if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'no_hp')) {
-                $user->no_hp = $this->manual_hp;
-                $user->save();
-            } else if (\Illuminate\Support\Facades\Schema::hasColumn('users', 'phone')) {
-                $user->phone = $this->manual_hp;
-                $user->save();
             }
 
             DB::commit();

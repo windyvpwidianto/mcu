@@ -278,9 +278,15 @@
                     <!-- Body Modal -->
                     <div class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
                         <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">NIK (ID Badge) <span class="text-error">*</span></span></label>
+                            <label class="label"><span class="label-text font-semibold">NIK <span class="text-error">*</span></span></label>
                             <input type="text" wire:model="manual_nik" class="input input-bordered w-full" required />
                             @error('manual_nik') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+                        
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">ID Badge <span class="text-error">*</span></span></label>
+                            <input type="text" wire:model="manual_badge" class="input input-bordered w-full" required />
+                            @error('manual_badge') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                         </div>
 
                         <div class="form-control w-full">
@@ -302,19 +308,26 @@
                         </div>
 
                         <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Departemen <span class="text-error">*</span></span></label>
-                            <input type="text" wire:model="manual_dept" class="input input-bordered w-full" required />
-                            @error('manual_dept') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
-
-                        <div class="form-control w-full">
                             <label class="label"><span class="label-text font-semibold">Jenis Karyawan <span class="text-error">*</span></span></label>
-                            <select wire:model="manual_jenis" class="select select-bordered w-full" required>
+                            <select wire:model.live="manual_jenis" class="select select-bordered w-full" required>
                                 <option value="">-- Pilih Jenis --</option>
-                                <option value="department">Internal (Department)</option>
+                                <option value="MSM">Internal (MSM)</option>
+                                <option value="TTN">Internal (TTN)</option>
                                 <option value="contractor">Kontraktor (Contractor)</option>
                             </select>
                             @error('manual_jenis') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+
+                        <div class="form-control w-full">
+                            <label class="label">
+                                <span class="label-text font-semibold">Departemen 
+                                    @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN')
+                                        <span class="text-error">*</span>
+                                    @endif
+                                </span>
+                            </label>
+                            <input type="text" wire:model="manual_dept" class="input input-bordered w-full" @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN') required @endif />
+                            @error('manual_dept') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                         </div>
                     </div>
 

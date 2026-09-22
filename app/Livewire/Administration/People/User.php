@@ -21,7 +21,7 @@ class User extends Component
     use WithPagination, WithFileUploads;
 
     public $userId, $name_user;
-    public $name, $gender, $date_birth, $username, $dep_cont, $employee_id, $date_commenced, $email, $role_id;
+    public $name, $nik, $phone_number, $gender, $date_birth, $username, $dep_cont, $employee_id, $date_commenced, $email, $role_id;
     public $showModal = false;
     public $showDeleteModal = false;
     public $showImportModal = false; // 🔹 untuk modal import
@@ -56,6 +56,8 @@ class User extends Component
 
         return [
             'name' => 'required|string|max:255',
+            'nik' => 'nullable|string|max:255',
+            'phone_number' => 'nullable|numeric',
             'gender' => 'nullable|in:L,P',
             'date_birth' => 'nullable|date',
             'role_id' => 'nullable',
@@ -108,6 +110,7 @@ class User extends Component
             'contractor_id.required_without' => 'Kontraktor wajib dipilih jika departemen tidak diisi.',
             'username.required' => 'Username wajib diisi.',
             'username.unique' => 'Username sudah digunakan.',
+            'phone_number.numeric' => 'Nomor HP harus berupa angka.',
             'employee_id.required' => 'Employee ID wajib diisi.',
             'employee_id.unique' => 'Employee ID sudah terdaftar.',
             'email.required' => 'Email wajib diisi.',
@@ -318,8 +321,8 @@ class User extends Component
             $this->contractor_id = null;
             $this->searchContractor = '';
         } elseif ($this->deptCont === 'contractor') {
-            $this->searchContractor = $user->department_name;
-            $this->contractor_id = Contractor::where('contractor_name', $user->department_name)->value('id');
+            $this->searchContractor = $user->company_name;
+            $this->contractor_id = Contractor::where('contractor_name', $user->company_name)->value('id');
             $this->department_id = null;
             $this->search = '';
         } else {
@@ -336,26 +339,37 @@ class User extends Component
         $this->validate();
         $userData = [
             'name' => $this->name,
+            'nik' => $this->nik,
+            'phone_number' => $this->phone_number,
             'gender' => $this->gender,
             'date_birth' => $this->date_birth,
             'username' => $this->username,
             'role_id' => $this->role_id,
-            'department_name' => $this->dep_cont, // atau nama kolom yang sesuai
             'pilih_divisi' => $this->deptCont,
             'employee_id' => $this->employee_id,
             'date_commenced' => $this->date_commenced,
             'email' => $this->email,
         ];
+        
+        if ($this->deptCont === 'department') {
+            $userData['department_name'] = $this->dep_cont;
+            $userData['company_name'] = null;
+        } else {
+            $userData['department_name'] = null;
+            $userData['company_name'] = $this->dep_cont;
+        }
 
         // Logika untuk Password: HANYA perbarui jika field password diisi.
         if (!empty($this->password)) {
             $userData['password'] = Hash::make($this->password);
         }
 
-        // Asumsi: UserProfile adalah model yang tepat (misalnya App\Models\User atau UserProfile)
-        UserProfile::create(
-            $userData
-        );
+        if ($this->userId) {
+            $userProfile = UserProfile::findOrFail($this->userId);
+            $userProfile->update($userData);
+        } else {
+            UserProfile::create($userData);
+        }
         $this->resetInput();
         $this->showModal = false;
         $text = $this->userId ? 'user berhasil diupdate!' : 'user berhasil ditambahkan!';
@@ -420,7 +434,7 @@ class User extends Component
 
     private function resetInput()
     {
-        $this->reset(['userId', 'name', 'gender', 'date_birth', 'username', 'role_id', 'employee_id', 'date_commenced', 'email', 'dep_cont', 'deptCont', 'password', 'password_confirmation',]);
+        $this->reset(['userId', 'name', 'nik', 'phone_number', 'gender', 'date_birth', 'username', 'role_id', 'employee_id', 'date_commenced', 'email', 'dep_cont', 'deptCont', 'password', 'password_confirmation',]);
         $this->dispatch('dateLoaded');
     }
 }

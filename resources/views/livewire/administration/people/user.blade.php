@@ -28,7 +28,7 @@
                             <th>Name</th>
                             <th>Gender</th>
                             <th>Username</th>
-                            <th>Department</th>
+                            <th>Department / Perusahaan</th>
                             <th>Employee ID</th>
                             <th>Email</th>
                             <th>Action</th>
@@ -43,7 +43,7 @@
                             <td>{{ $user->formatted_name }}</td>
                             <td>{{ $user->gender }}</td>
                             <td>{{ $user->username }}</td>
-                            <td>{{ $user->department_name }}</td>
+                            <td>{{ $user->department_name ?? $user->company_name ?? '-' }}</td>
                             <td>{{ $user->employee_id }}</td>
                             <td>{{ $user->email }}</td>
                             <td class="flex gap-2">
@@ -74,6 +74,20 @@
                     <input type="text" wire:model.live="name"
                         class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('name') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
                     <x-label-error :messages="$errors->get('name')" />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <x-form.label label="NIK" />
+                    <input type="text" wire:model.live="nik"
+                        class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('nik') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                    <x-label-error :messages="$errors->get('nik')" />
+                </fieldset>
+
+                <fieldset class="fieldset">
+                    <x-form.label label="Nomor HP" />
+                    <input type="text" wire:model.live="phone_number"
+                        class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('phone_number') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                    <x-label-error :messages="$errors->get('phone_number')" />
                 </fieldset>
 
                 <fieldset class="fieldset">

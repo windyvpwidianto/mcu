@@ -5,6 +5,7 @@ namespace App\Livewire\Mcu;
 use App\Models\User;
 use App\Models\McuSchedule;
 use App\Models\McuRecord;
+use App\Models\McuResult;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
@@ -813,14 +814,28 @@ class GenerateSchedule extends Component
                         ->first();
 
                     if ($existing) {
-                        // Update existing record
+                        // Update existing record with correct statuses
                         $existing->update([
-                            'mcu_date' => $mcuDate,
+                            'mcu_date'          => $mcuDate,
+                            'attendance_status' => 'present',
+                            'process_status'    => 'completed',
+                            'notification_status' => 'notified',
                         ]);
+
+                        // Upsert McuResult (Kesimpulan Medis Dasar)
+                        McuResult::updateOrCreate(
+                            ['mcu_record_id' => $existing->id],
+                            [
+                                'status'          => 'fit_to_work',
+                                'workflow_status' => 'reviewed',
+                                'is_published'    => true,
+                            ]
+                        );
+
                         $this->importHistoryResults['skipped']++;
                     } else {
                         // Create new history record (without schedule link)
-                        McuRecord::create([
+                        $newRecord = McuRecord::create([
                             'mcu_schedule_id'     => null,
                             'employee_id'         => $user->id,
                             'mcu_year'            => $year,
@@ -829,6 +844,15 @@ class GenerateSchedule extends Component
                             'process_status'      => 'completed',
                             'notification_status' => 'notified',
                         ]);
+
+                        // Create McuResult (Kesimpulan Medis Dasar = Fit To Work)
+                        McuResult::create([
+                            'mcu_record_id'   => $newRecord->id,
+                            'status'          => 'fit_to_work',
+                            'workflow_status' => 'reviewed',
+                            'is_published'    => true,
+                        ]);
+
                         $this->importHistoryResults['success']++;
                     }
                 }

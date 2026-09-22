@@ -277,71 +277,202 @@
 
                     <!-- Body Modal -->
                     <div class="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-4">
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">NIK <span class="text-error">*</span></span></label>
-                            <input type="text" wire:model="manual_nik" class="input input-bordered w-full" required />
-                            @error('manual_nik') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
-                        
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">ID Badge <span class="text-error">*</span></span></label>
-                            <input type="text" wire:model="manual_badge" class="input input-bordered w-full" required />
-                            @error('manual_badge') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                        <div class="grid grid-cols-2 gap-4 mt-4">
 
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Nama Lengkap <span class="text-error">*</span></span></label>
-                            <input type="text" wire:model="manual_name" class="input input-bordered w-full" required />
-                            @error('manual_name') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <fieldset class="fieldset">
+                                <x-form.label label="NIK" required />
+                                <input type="text" wire:model.live="manual_nik"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_nik') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <x-label-error :messages="$errors->get('manual_nik')" />
+                            </fieldset>
 
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Tanggal Lahir <span class="text-error">*</span></span></label>
-                            <input type="date" wire:model="manual_dob" class="input input-bordered w-full" required />
-                            @error('manual_dob') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <fieldset class="fieldset">
+                                <x-form.label label="Employee ID" required />
+                                <input type="text" wire:model.live="manual_badge"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_badge') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <x-label-error :messages="$errors->get('manual_badge')" />
+                            </fieldset>
 
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Nomor HP <span class="text-error">*</span></span></label>
-                            <input type="text" wire:model="manual_hp" class="input input-bordered w-full" required />
-                            @error('manual_hp') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <fieldset class="fieldset">
+                                <x-form.label label="Nama Lengkap" required />
+                                <input type="text" wire:model.live="manual_name"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_name') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <x-label-error :messages="$errors->get('manual_name')" />
+                            </fieldset>
 
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Jenis Karyawan <span class="text-error">*</span></span></label>
-                            <select wire:model.live="manual_jenis" class="select select-bordered w-full" required>
-                                <option value="">-- Pilih Jenis --</option>
-                                <option value="MSM">Internal (MSM)</option>
-                                <option value="TTN">Internal (TTN)</option>
-                                <option value="contractor">Kontraktor (Contractor)</option>
-                            </select>
-                            @error('manual_jenis') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                            <fieldset class="fieldset">
+                                <x-form.label label="Jenis Kelamin" />
+                                <select wire:model.live="manual_gender"
+                                    class="w-full select select-bordered focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs">
+                                    <option value="">-- Pilih --</option>
+                                    <option value="L">Laki - laki</option>
+                                    <option value="P">Perempuan</option>
+                                </select>
+                                <x-label-error :messages="$errors->get('manual_gender')" />
+                            </fieldset>
 
-                        <div class="form-control w-full">
-                            <label class="label">
-                                <span class="label-text font-semibold">Departemen 
-                                    @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN')
-                                        <span class="text-error">*</span>
+                            <fieldset class="relative fieldset">
+                                <x-form.label label="Tanggal Lahir" />
+                                <div class="{{ $errors->has('manual_dob') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500 rounded' : 'ring-base-300 focus:ring-base-300 focus:border-base-300 rounded' }}">
+                                    <div class="relative " wire:ignore x-data="{
+                                        fp: null,
+                                        initFlatpickr() {
+                                            if (this.fp) this.fp.destroy();
+                                            this.fp = flatpickr(this.$refs.tanggalInput, {
+                                                disableMobile: true,
+                                                enableTime: false,
+                                                defaultDate: this.$wire.entangle('manual_dob').defer,
+                                                dateFormat: 'Y-m-d',
+                                                clickOpens: true,
+                                                static: true,
+                                                position: 'auto-below',
+                                                onChange: (selectedDates, dateStr) => {
+                                                    this.$wire.set('manual_dob', dateStr);
+                                                }
+                                            });
+                                        }
+                                    }" x-ref="wrapper"
+                                        x-init="initFlatpickr(); Livewire.hook('message.processed', () => { initFlatpickr(); });">
+                                        <input type="text" x-ref="tanggalInput" wire:model.live="manual_dob"
+                                            placeholder="Tanggal Lahir" readonly
+                                            class="input input-bordered cursor-pointer w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_dob') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                    </div>
+                                </div>
+                                <x-label-error :messages="$errors->get('manual_dob')" />
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <x-form.label label="Nomor HP" />
+                                <input type="text" wire:model.live="manual_hp"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_hp') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <x-label-error :messages="$errors->get('manual_hp')" />
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <x-form.label label="Username" />
+                                <input type="text" wire:model.live="manual_username"
+                                    class="w-full input input-bordered focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs" />
+                                <x-label-error :messages="$errors->get('manual_username')" />
+                            </fieldset>
+
+                            <fieldset>
+                                <input id="manual_department" value="department" wire:model.live="manual_deptCont"
+                                    class="peer/department radio radio-xs radio-accent" type="radio" name="manual_deptCont" />
+                                <x-form.label for="manual_department" class="peer-checked/department:text-accent text-[10px]"
+                                    label="PT. MSM & PT. TTN" required />
+                                <input id="manual_contractor" value="contractor" wire:model.live="manual_deptCont"
+                                    class="peer/contractor radio radio-xs radio-primary" type="radio" name="manual_deptCont" />
+                                <x-form.label for="manual_contractor" class="peer-checked/contractor:text-primary" label="Kontraktor"
+                                    required />
+
+                                <div class="hidden peer-checked/department:block mt-0.5">
+                                    {{-- Department --}}
+                                    <div class="relative mb-1">
+                                        <!-- Input Search -->
+                                        <input name="searchDept" type="text" wire:model.live.debounce.300ms="searchDept"
+                                            wire:key="search-dept" placeholder="Cari departemen..."
+                                            class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('department_id') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                        <!-- Dropdown hasil search -->
+                                        @if ($showDropdown && count($searchDepartments) > 0)
+                                        <ul class="absolute z-10 w-full mt-1 overflow-auto border rounded-md shadow bg-base-100 max-h-60">
+                                            <div wire:loading wire:target="selectDepartment" class="p-2 text-center">
+                                                <span class="loading loading-spinner loading-sm text-secondary"></span>
+                                            </div>
+                                            @foreach ($searchDepartments as $dept)
+                                            <li wire:click="selectDepartment({{ $dept->id }}, '{{ $dept->department_name }}')"
+                                                class="px-3 py-2 cursor-pointer hover:bg-base-200">
+                                                {{ $dept->department_name }}
+                                            </li>
+                                            @endforeach
+                                        </ul>
+                                        @endif
+                                    </div>
+                                    @if ($manual_deptCont === 'department')
+                                    <x-label-error :messages="$errors->get('department_id')" />
                                     @endif
-                                </span>
-                            </label>
-                            <input type="text" list="department-list" wire:model="manual_dept" class="input input-bordered w-full" @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN') required @endif />
-                            <datalist id="department-list">
-                                @foreach($allDepartments as $deptName)
-                                    <option value="{{ $deptName }}"></option>
-                                @endforeach
-                            </datalist>
-                            @error('manual_dept') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
-                        </div>
+                                </div>
+                                <div class="hidden peer-checked/contractor:block mt-0.5">
+                                    {{-- Contractor --}}
+                                    <div class="relative mb-1">
+                                        <!-- Input Search -->
+                                        <input name="searchContractor" type="text"
+                                            wire:model.live.debounce.300ms="searchContractor"
+                                            wire:key="search-contractor" placeholder="Cari kontraktor..."
+                                            class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('contractor_id') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                        <!-- Dropdown hasil search -->
+                                        @if ($showContractorDropdown && count($searchContractors) > 0)
+                                        <ul class="absolute z-10 w-full mt-1 overflow-auto border rounded-md shadow bg-base-100 max-h-60">
+                                            <div wire:loading wire:target="selectContractor" class="p-2 text-center">
+                                                <span class="loading loading-spinner loading-sm text-secondary"></span>
+                                            </div>
+                                            @foreach ($searchContractors as $contractor)
+                                            <li wire:click="selectContractor({{ $contractor->id }}, '{{ $contractor->contractor_name }}')"
+                                                class="px-3 py-2 cursor-pointer hover:bg-base-200">
+                                                {{ $contractor->contractor_name }}
+                                            </li>
+                                            @endforeach
+                                        </ul>
+                                        @endif
+                                    </div>
+                                    @if ($manual_deptCont === 'contractor')
+                                    <x-label-error :messages="$errors->get('contractor_id')" />
+                                    @endif
+                                </div>
+                            </fieldset>
 
-                        @if($manual_jenis == 'contractor')
-                        <div class="form-control w-full">
-                            <label class="label"><span class="label-text font-semibold">Perusahaan <span class="text-error">*</span></span></label>
-                            <input type="text" wire:model="manual_perusahaan" class="input input-bordered w-full" required />
-                            @error('manual_perusahaan') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                            <fieldset class="fieldset">
+                                <x-form.label label="Tanggal masuk" />
+                                <input type="text" readonly id="manual_date_commenced" wire:model="manual_date_commenced"
+                                    class="cursor-pointer input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_date_commenced') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}"
+                                    placeholder="Pilih tanggal masuk" x-data="{ fp: null }"
+                                    x-init="
+                                    fp = flatpickr($refs.input, {
+                                        dateFormat: 'Y-m-d',
+                                         static: true,
+                                    });
+                                    $wire.on('dateLoaded', () => {
+                                        if ($wire.manual_date_commenced) {
+                                            fp.setDate($wire.manual_date_commenced);
+                                        }
+                                    });" x-ref="input" />
+                                <x-label-error :messages="$errors->get('manual_date_commenced')" />
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <x-form.label label="Email" />
+                                <input type="email" wire:model.live="manual_email"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_email') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <x-label-error :messages="$errors->get('manual_email')" />
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <x-form.label label="Pilih Peran" />
+                                <select wire:model.live="manual_role_id"
+                                    class="select select-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs{{ $errors->has('manual_role_id') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}">
+                                    <option value="">-- Pilih --</option>
+                                    @foreach ($roles as $role)
+                                    <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                    @endforeach
+                                </select>
+                                <x-label-error :messages="$errors->get('manual_role_id')" />
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <x-form.label label="Password" />
+                                <input type="password" wire:model="manual_password"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_password') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <p class="text-[8px] text-gray-500 mt-0.5">Kosongkan jika menggunakan default 'password'</p>
+                                <x-label-error :messages="$errors->get('manual_password')" />
+                            </fieldset>
+
+                            <fieldset class="fieldset">
+                                <x-form.label label="Konfirmasi Password" />
+                                <input type="password" wire:model="manual_password_confirmation"
+                                    class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_password_confirmation') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
+                                <x-label-error :messages="$errors->get('manual_password_confirmation')" />
+                            </fieldset>
+
                         </div>
-                        @endif
                     </div>
 
                     <!-- Footer Modal -->

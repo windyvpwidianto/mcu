@@ -12,6 +12,10 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\McuScheduleImport;
 use App\Imports\PesertaMcuImport;
 use App\Exports\PesertaMcuTemplateExport;
+use App\Models\Role;
+use App\Models\Department;
+use App\Models\Contractor;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Hash;
@@ -31,16 +35,32 @@ class GenerateSchedule extends Component
     public $importResults = null;
     public $importErrors = [];
 
-    // Tambah Peserta Manual properties
+    // Manual Add Peserta properties
     public $showManualModal = false;
     public $manual_nik = '';
     public $manual_badge = '';
     public $manual_name = '';
     public $manual_dob = '';
     public $manual_hp = '';
-    public $manual_dept = '';
-    public $manual_perusahaan = '';
-    public $manual_jenis = '';
+    public $manual_gender = '';
+    public $manual_username = '';
+    public $manual_email = '';
+    public $manual_date_commenced = '';
+    public $manual_role_id = '';
+    public $manual_password = '';
+    public $manual_password_confirmation = '';
+    public $manual_deptCont = 'department'; // PT. MSM & PT. TTN or Kontraktor
+    public $manual_dep_cont_name = ''; // Stores actual department or company name
+    public $department_id;
+    public $contractor_id;
+    
+    // For custom dropdown search
+    public $searchDept = '';
+    public $searchContractor = '';
+    public $showDropdown = false;
+    public $showContractorDropdown = false;
+    public $searchDepartments = [];
+    public $searchContractors = [];
     
     // Import Peserta properties
     public $pesertaExcelFile;
@@ -92,8 +112,64 @@ class GenerateSchedule extends Component
 
     public function resetManualForm()
     {
-        $this->reset(['manual_nik', 'manual_badge', 'manual_name', 'manual_dob', 'manual_hp', 'manual_dept', 'manual_perusahaan', 'manual_jenis']);
+        $this->reset([
+            'manual_nik', 'manual_badge', 'manual_name', 'manual_dob', 'manual_hp', 
+            'manual_gender', 'manual_username', 'manual_email', 'manual_date_commenced', 
+            'manual_role_id', 'manual_password', 'manual_password_confirmation',
+            'manual_deptCont', 'manual_dep_cont_name', 'department_id', 'contractor_id',
+            'searchDept', 'searchContractor', 'showDropdown', 'showContractorDropdown'
+        ]);
         $this->resetValidation();
+        $this->dispatch('dateLoaded');
+    }
+
+    public function updatedSearchDept()
+    {
+        if (strlen($this->searchDept) > 1) {
+            $this->searchDepartments = Department::where('department_name', 'like', '%' . $this->searchDept . '%')
+                ->orderBy('department_name')
+                ->limit(10)
+                ->get();
+            $this->showDropdown = true;
+        } else {
+            $this->searchDepartments = [];
+            $this->showDropdown = false;
+        }
+    }
+
+    public function selectDepartment($id, $name)
+    {
+        $this->reset('searchContractor', 'contractor_id');
+        $this->department_id = $id;
+        $this->searchDept = $name;
+        $this->manual_dep_cont_name = $name;
+        $this->showDropdown = false;
+        $this->validateOnly('department_id');
+    }
+
+    public function updatedSearchContractor()
+    {
+        if (strlen($this->searchContractor) > 1) {
+            $this->searchContractors = Contractor::query()
+                ->where('contractor_name', 'like', '%' . $this->searchContractor . '%')
+                ->orderBy('contractor_name')
+                ->limit(10)
+                ->get();
+            $this->showContractorDropdown = true;
+        } else {
+            $this->searchContractors = [];
+            $this->showContractorDropdown = true;
+        }
+    }
+
+    public function selectContractor($id, $name)
+    {
+        $this->reset('searchDept', 'department_id');
+        $this->contractor_id = $id;
+        $this->searchContractor = $name;
+        $this->manual_dep_cont_name = $name;
+        $this->showContractorDropdown = false;
+        $this->validateOnly('contractor_id');
     }
 
     public function openImportPesertaModal()
@@ -124,60 +200,93 @@ class GenerateSchedule extends Component
             abort(403, 'Unauthorized action.');
         }
 
+        // Require fields that should be standard
         $this->validate([
-            'manual_nik' => 'required|string|max:255',
-            'manual_badge' => 'required|string|max:255',
             'manual_name' => 'required|string|max:255',
-            'manual_dob' => 'required|date',
-            'manual_hp' => 'required|numeric',
-            'manual_jenis' => 'required|string|in:MSM,TTN,contractor',
-            'manual_dept' => 'required_if:manual_jenis,MSM,TTN',
-            'manual_perusahaan' => 'required_if:manual_jenis,contractor',
+            'manual_badge' => 'required|string|max:255', // Employee ID is required generally
+            'manual_nik' => 'nullable|string|max:255',
+            'manual_hp' => 'nullable|numeric',
+            'manual_gender' => 'nullable|in:L,P',
+            'manual_dob' => 'nullable|date',
+            'manual_date_commenced' => 'nullable|date',
+            'manual_role_id' => 'nullable',
+            
+            // Password confirmation logic
+            'manual_password' => 'nullable|string|min:6',
+            'manual_password_confirmation' => 'nullable|same:manual_password',
+            
+            'manual_username' => [
+                'nullable',
+                'string',
+                'max:255',
+            ],
+            'manual_email' => [
+                'nullable',
+                'email',
+                'max:255',
+            ],
+            'department_id' => 'required_without:contractor_id',
+            'contractor_id' => 'required_without:department_id',
         ], [
-            'manual_nik.required' => 'NIK wajib diisi.',
-            'manual_badge.required' => 'ID Badge wajib diisi.',
             'manual_name.required' => 'Nama Lengkap wajib diisi.',
-            'manual_dob.required' => 'Tanggal Lahir wajib diisi.',
-            'manual_hp.required' => 'Nomor HP wajib diisi.',
+            'manual_badge.required' => 'ID Badge / Employee ID wajib diisi.',
             'manual_hp.numeric' => 'Nomor HP harus berupa angka.',
-            'manual_dept.required_if' => 'Departemen wajib diisi untuk karyawan internal.',
-            'manual_perusahaan.required_if' => 'Perusahaan wajib diisi untuk kontraktor.',
-            'manual_jenis.required' => 'Jenis Karyawan wajib dipilih.',
-            'manual_jenis.in' => 'Jenis Karyawan tidak valid.',
+            'manual_password_confirmation.same' => 'Konfirmasi password tidak cocok.',
+            'department_id.required_without' => 'Departemen wajib dipilih jika kontraktor tidak diisi.',
+            'contractor_id.required_without' => 'Kontraktor wajib dipilih jika departemen tidak diisi.',
+            'manual_email.email' => 'Format email tidak valid.',
         ]);
 
         try {
             DB::beginTransaction();
-            
-            // Check if ID Badge already exists
+
+            // Find user by Employee ID
             $user = User::where('employee_id', $this->manual_badge)->first();
 
+            $userData = [
+                'name' => $this->manual_name,
+                'nik' => $this->manual_nik,
+                'phone_number' => $this->manual_hp,
+                'gender' => $this->manual_gender,
+                'date_birth' => $this->manual_dob,
+                'date_commenced' => $this->manual_date_commenced,
+                'role_id' => $this->manual_role_id,
+                'pilih_divisi' => $this->manual_deptCont,
+            ];
+
+            if ($this->manual_deptCont === 'department') {
+                $userData['department_name'] = $this->manual_dep_cont_name;
+                $userData['company_name'] = null;
+            } else {
+                $userData['department_name'] = null;
+                $userData['company_name'] = $this->manual_dep_cont_name;
+            }
+
+            // Fallback for username if not filled (only on create or if explicitly missing)
+            if ($this->manual_username) {
+                $userData['username'] = $this->manual_username;
+            } elseif (!$user) {
+                $userData['username'] = $this->manual_badge;
+            }
+
+            if ($this->manual_email) {
+                $userData['email'] = $this->manual_email;
+            }
+
+            if (!empty($this->manual_password)) {
+                $userData['password'] = Hash::make($this->manual_password);
+            } elseif (!$user) {
+                $userData['password'] = Hash::make('password'); // Default password for new users if blank
+            }
+
             if ($user) {
-                // Upsert/Update existing
-                $user->update([
-                    'nik' => $this->manual_nik,
-                    'name' => $this->manual_name,
-                    'date_birth' => $this->manual_dob,
-                    'phone_number' => $this->manual_hp,
-                    'department_name' => $this->manual_dept,
-                    'company_name' => $this->manual_perusahaan,
-                    'pilih_divisi' => $this->manual_jenis,
-                ]);
+                // Update existing
+                $user->update($userData);
                 $message = 'Data peserta berhasil di-update berdasarkan ID Badge yang ada.';
             } else {
                 // Create new
-                $user = User::create([
-                    'employee_id' => $this->manual_badge,
-                    'nik' => $this->manual_nik,
-                    'username' => $this->manual_badge, // Default username
-                    'name' => $this->manual_name,
-                    'date_birth' => $this->manual_dob,
-                    'phone_number' => $this->manual_hp,
-                    'department_name' => $this->manual_dept,
-                    'company_name' => $this->manual_perusahaan,
-                    'pilih_divisi' => $this->manual_jenis,
-                    'password' => Hash::make('password'), // Default password
-                ]);
+                $userData['employee_id'] = $this->manual_badge;
+                $user = User::create($userData);
                 $message = 'Data peserta baru berhasil ditambahkan.';
             }
 
@@ -582,11 +691,14 @@ class GenerateSchedule extends Component
         // List of years for filter (from mcu_records)
         $years = McuRecord::select('mcu_year')->distinct()->whereNotNull('mcu_year')->orderBy('mcu_year', 'desc')->pluck('mcu_year');
 
+        $roles = Role::all();
+
         return view('livewire.mcu.generate-schedule', [
             'employees' => $employees,
             'departments' => $departments,
             'allDepartments' => $allDepartments,
-            'years' => $years
+            'years' => $years,
+            'roles' => $roles
         ]);
     }
 }

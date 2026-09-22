@@ -39,6 +39,7 @@ class GenerateSchedule extends Component
     public $manual_dob = '';
     public $manual_hp = '';
     public $manual_dept = '';
+    public $manual_perusahaan = '';
     public $manual_jenis = '';
     
     // Import Peserta properties
@@ -91,7 +92,7 @@ class GenerateSchedule extends Component
 
     public function resetManualForm()
     {
-        $this->reset(['manual_nik', 'manual_badge', 'manual_name', 'manual_dob', 'manual_hp', 'manual_dept', 'manual_jenis']);
+        $this->reset(['manual_nik', 'manual_badge', 'manual_name', 'manual_dob', 'manual_hp', 'manual_dept', 'manual_perusahaan', 'manual_jenis']);
         $this->resetValidation();
     }
 
@@ -131,6 +132,7 @@ class GenerateSchedule extends Component
             'manual_hp' => 'required|numeric',
             'manual_jenis' => 'required|string|in:MSM,TTN,contractor',
             'manual_dept' => 'required_if:manual_jenis,MSM,TTN',
+            'manual_perusahaan' => 'required_if:manual_jenis,contractor',
         ], [
             'manual_nik.required' => 'NIK wajib diisi.',
             'manual_badge.required' => 'ID Badge wajib diisi.',
@@ -139,6 +141,7 @@ class GenerateSchedule extends Component
             'manual_hp.required' => 'Nomor HP wajib diisi.',
             'manual_hp.numeric' => 'Nomor HP harus berupa angka.',
             'manual_dept.required_if' => 'Departemen wajib diisi untuk karyawan internal.',
+            'manual_perusahaan.required_if' => 'Perusahaan wajib diisi untuk kontraktor.',
             'manual_jenis.required' => 'Jenis Karyawan wajib dipilih.',
             'manual_jenis.in' => 'Jenis Karyawan tidak valid.',
         ]);
@@ -157,6 +160,7 @@ class GenerateSchedule extends Component
                     'date_birth' => $this->manual_dob,
                     'phone_number' => $this->manual_hp,
                     'department_name' => $this->manual_dept,
+                    'company_name' => $this->manual_perusahaan,
                     'pilih_divisi' => $this->manual_jenis,
                 ]);
                 $message = 'Data peserta berhasil di-update berdasarkan ID Badge yang ada.';
@@ -170,6 +174,7 @@ class GenerateSchedule extends Component
                     'date_birth' => $this->manual_dob,
                     'phone_number' => $this->manual_hp,
                     'department_name' => $this->manual_dept,
+                    'company_name' => $this->manual_perusahaan,
                     'pilih_divisi' => $this->manual_jenis,
                     'password' => Hash::make('password'), // Default password
                 ]);

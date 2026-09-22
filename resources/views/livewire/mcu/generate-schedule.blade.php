@@ -329,6 +329,14 @@
                             <input type="text" wire:model="manual_dept" class="input input-bordered w-full" @if($manual_jenis == 'MSM' || $manual_jenis == 'TTN') required @endif />
                             @error('manual_dept') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
                         </div>
+
+                        @if($manual_jenis == 'contractor')
+                        <div class="form-control w-full">
+                            <label class="label"><span class="label-text font-semibold">Perusahaan <span class="text-error">*</span></span></label>
+                            <input type="text" wire:model="manual_perusahaan" class="input input-bordered w-full" required />
+                            @error('manual_perusahaan') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                        </div>
+                        @endif
                     </div>
 
                     <!-- Footer Modal -->

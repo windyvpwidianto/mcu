@@ -9,3 +9,4 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 Schedule::command('mcu:send-reminders')->dailyAt('07:00');
 Schedule::command('mcu:send-recaps')->monthlyOn(1, '08:00');
+Schedule::command('mcu:process-no-show')->dailyAt('23:59')->timezone('Asia/Jakarta');

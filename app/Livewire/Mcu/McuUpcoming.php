@@ -30,7 +30,7 @@ class McuUpcoming extends Component
 
     public function render()
     {
-        $today = Carbon::today();
+        $today = Carbon::today('Asia/Jakarta');
 
         $query = User::whereNotNull('next_mcu_date')
             ->with(['departments', 'contractors'])

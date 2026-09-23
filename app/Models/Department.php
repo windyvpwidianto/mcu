@@ -10,7 +10,8 @@ class Department extends Model
 
     protected $fillable = [
         'department_name',
-        'status'
+        'status',
+        'email'
     ];
     // app/Models/Department.php
 

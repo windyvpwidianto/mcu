@@ -12,7 +12,8 @@ class Contractor extends Model
 
     protected $fillable = [
         'contractor_name',
-        'status'
+        'status',
+        'email'
     ];
     public function scopeEnabled($query)
     {

@@ -1,7 +1,12 @@
 <div>
     <div class="min-h-screen p-6 bg-base-200">
-        <h1 class="mb-6 text-2xl font-bold text-base-content">Dashboard Medical Check-Up</h1>
-
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+            <h1 class="text-2xl font-bold text-base-content">Dashboard Medical Check-Up</h1>
+            <div class="mt-4 md:mt-0 px-3 py-2 bg-blue-50 text-blue-700 text-sm font-semibold rounded-lg border border-blue-100 flex items-center shadow-sm w-fit">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                Hari ini: {{ \Carbon\Carbon::now('Asia/Jakarta')->translatedFormat('d F Y') }}
+            </div>
+        </div>
         <div class="grid grid-cols-1 gap-6 mb-6 lg:grid-cols-3">
 
             <div class="p-4 border shadow bg-base-100 rounded-xl border-base-300">

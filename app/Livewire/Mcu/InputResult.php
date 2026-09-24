@@ -95,8 +95,8 @@ class InputResult extends Component
 
             return (object) [
                 'id'            => $p->id,
-                'name'          => $p->employee->name . ' - ' . $date, // Untuk Searchable Select
-                'raw_name'      => $p->employee->name,                 // Untuk Tabel
+                'name'          => ($p->employee?->name ?? 'Unknown') . ' - ' . $date, // Untuk Searchable Select
+                'raw_name'      => $p->employee?->name ?? 'Unknown',                 // Untuk Tabel
                 'schedule_date' => $date,                              // Untuk Tabel
                 'status'        => $p->notification_status ?? 'pending' // (Opsional) Ambil status dari DB
             ];

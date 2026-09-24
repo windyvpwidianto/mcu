@@ -849,41 +849,74 @@ class GenerateSchedule extends Component
                         ->where('mcu_year', $year)
                         ->first();
 
-                    if ($existing) {
-                        $existing->update([
-                            'mcu_date'            => $mcuDate,
-                            'attendance_status'   => 'present',
-                            'process_status'      => 'completed',
-                            'notification_status' => 'notified',
-                        ]);
+                    $isFutureOrToday = false;
+                    if ((int)$year == 2026) {
+                        $today = Carbon::today('Asia/Jakarta');
+                        $mcuDateCarbon = Carbon::parse($mcuDate)->startOfDay();
+                        if ($mcuDateCarbon->greaterThanOrEqualTo($today)) {
+                            $isFutureOrToday = true;
+                        }
+                    }
 
-                        McuResult::updateOrCreate(
-                            ['mcu_record_id' => $existing->id],
-                            [
-                                'status'          => 'fit_to_work',
-                                'workflow_status' => 'reviewed',
-                                'is_published'    => true,
-                            ]
-                        );
+                    if ($existing) {
+                        if ($isFutureOrToday) {
+                            $existing->update([
+                                'mcu_date'            => $mcuDate,
+                                'attendance_status'   => 'scheduled',
+                                'process_status'      => 'scheduled',
+                                'notification_status' => 'pending',
+                            ]);
+                            // hapus result jika ada agar bisa di-proses no-show nanti malam
+                            McuResult::where('mcu_record_id', $existing->id)->delete();
+                        } else {
+                            $existing->update([
+                                'mcu_date'            => $mcuDate,
+                                'attendance_status'   => 'present',
+                                'process_status'      => 'completed',
+                                'notification_status' => 'notified',
+                            ]);
+    
+                            McuResult::updateOrCreate(
+                                ['mcu_record_id' => $existing->id],
+                                [
+                                    'status'          => 'fit_to_work',
+                                    'workflow_status' => 'reviewed',
+                                    'is_published'    => true,
+                                ]
+                            );
+                        }
 
                         $this->importHistoryResults['skipped']++;
                     } else {
-                        $newRecord = McuRecord::create([
-                            'mcu_schedule_id'     => null,
-                            'employee_id'         => $user->id,
-                            'mcu_year'            => $year,
-                            'mcu_date'            => $mcuDate,
-                            'attendance_status'   => 'present',
-                            'process_status'      => 'completed',
-                            'notification_status' => 'notified',
-                        ]);
-
-                        McuResult::create([
-                            'mcu_record_id'   => $newRecord->id,
-                            'status'          => 'fit_to_work',
-                            'workflow_status' => 'reviewed',
-                            'is_published'    => true,
-                        ]);
+                        if ($isFutureOrToday) {
+                            $newRecord = McuRecord::create([
+                                'mcu_schedule_id'     => null,
+                                'employee_id'         => $user->id,
+                                'mcu_year'            => $year,
+                                'mcu_date'            => $mcuDate,
+                                'attendance_status'   => 'scheduled',
+                                'process_status'      => 'scheduled',
+                                'notification_status' => 'pending',
+                            ]);
+                            // tidak ada result yang di-create
+                        } else {
+                            $newRecord = McuRecord::create([
+                                'mcu_schedule_id'     => null,
+                                'employee_id'         => $user->id,
+                                'mcu_year'            => $year,
+                                'mcu_date'            => $mcuDate,
+                                'attendance_status'   => 'present',
+                                'process_status'      => 'completed',
+                                'notification_status' => 'notified',
+                            ]);
+    
+                            McuResult::create([
+                                'mcu_record_id'   => $newRecord->id,
+                                'status'          => 'fit_to_work',
+                                'workflow_status' => 'reviewed',
+                                'is_published'    => true,
+                            ]);
+                        }
 
                         $this->importHistoryResults['success']++;
                     }

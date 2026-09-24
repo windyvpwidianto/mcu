@@ -45,6 +45,12 @@ class InputResult extends Component
             'status'             => null,             // Status medis dikosongkan dulu karena belum direview dokter
         ]);
 
+        // Update status di mcu_records menjadi hadir dan selesai
+        McuRecord::where('id', $this->participant_id)->update([
+            'attendance_status' => McuRecord::ATTENDANCE_PRESENT,
+            'process_status' => McuRecord::PROCESS_COMPLETED,
+        ]);
+
         session()->flash('message', 'Hasil MCU berhasil diunggah. Menunggu review Dokter.');
         $this->reset(['participant_id', 'result_document', 'admin_notes', 'searchParticipant']);
     }
@@ -78,8 +84,14 @@ class InputResult extends Component
     {
         $today = Carbon::today();
         // 1. Mulai query dasar: Ambil peserta yang belum memiliki hasil MCU
+        //    serta hanya menampilkan yang masih berstatus 'scheduled' (Waiting & Menunggu Pelaksana)
         $query = McuRecord::whereDoesntHave('result')
-            ->with(['employee', 'schedule']);
+            ->has('employee') // Sembunyikan data "Unknown" (Karyawan yang sudah terhapus)
+            ->where('attendance_status', McuRecord::ATTENDANCE_SCHEDULED)
+            ->where('process_status', McuRecord::PROCESS_SCHEDULED)
+            ->where('mcu_year', $today->year)
+            ->with(['employee', 'schedule'])
+            ->orderBy('mcu_date', 'asc');
 
         // 3. Tambahkan filter pencarian (Jika user mengetik di input pencarian)
         if (!empty($this->searchParticipant) && empty($this->participant_id)) {
@@ -90,8 +102,12 @@ class InputResult extends Component
 
         // 4. Ambil data dan format menjadi bentuk Array yang dibutuhkan komponen
         $formattedParticipants = $query->paginate(30)->through(function ($p) {
-            // Karena Anda menggunakan format(), pastikan schedule_date di model McuSchedule sudah di-cast menjadi 'datetime' atau 'date'
-            $date = $p->schedule ? $p->schedule->schedule_date->format('d M Y') : 'Tanpa Jadwal';
+            // Cek apakah ada mcu_date langsung di record, jika tidak fallback ke schedule relasi
+            if ($p->mcu_date) {
+                $date = \Carbon\Carbon::parse($p->mcu_date)->format('d F Y');
+            } else {
+                $date = $p->schedule ? \Carbon\Carbon::parse($p->schedule->schedule_date)->format('d F Y') : 'Tanpa Jadwal';
+            }
 
             return (object) [
                 'id'            => $p->id,

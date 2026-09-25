@@ -23,6 +23,14 @@ class McuController extends Controller
             'schedule' => $mcuResult->record->schedule,
         ];
 
+        // Jika file docx sertifikat sudah ter-generate, langsung download file tersebut
+        if ($mcuResult->certificate_path) {
+            $filePath = storage_path('app/public/' . $mcuResult->certificate_path);
+            if (file_exists($filePath)) {
+                return response()->download($filePath);
+            }
+        }
+
         $pdf = Pdf::loadView('pdf.mcu_fit_letter', $data);
 
         // stream() agar PDF terbuka di tab browser (tidak otomatis terdownload)

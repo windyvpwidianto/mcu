@@ -1,6 +1,6 @@
 <div>
-    <div class="grid items-start grid-cols-1 gap-6 lg:grid-cols-2">
-        <section class="w-full  mx-auto px-4 py-6">
+    <div class="grid items-start grid-cols-1 gap-6 max-w-7xl mx-auto">
+        <section class="w-full px-4 pt-6">
             <div class="card bg-base-100 shadow-sm border border-base-200">
                 <div class="card-body">
                     <h2 class="card-title text-xl mb-4">Input Hasil MCU (Medical Admin)</h2>
@@ -36,7 +36,7 @@
                 </div>
             </div>
         </section>
-        <section class="w-full mx-auto px-4 py-6">
+        <section class="w-full px-4 pb-6">
             <div class="card bg-base-100 shadow-sm border border-base-200">
                 <div class="card-body">
                     <h2 class="card-title text-xl mb-4">Daftar Peserta MCU (Menunggu Review Dokter)</h2>

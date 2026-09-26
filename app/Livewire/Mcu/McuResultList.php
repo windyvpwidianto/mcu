@@ -27,6 +27,7 @@ class McuResultList extends Component
             'record.schedule'
         ])
             ->whereIn('workflow_status', ['pending_doctor', 'reviewed'])
+            ->whereNotNull('result_document')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
         return view('livewire.mcu.mcu-result-list', [

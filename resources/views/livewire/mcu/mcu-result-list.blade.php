@@ -84,54 +84,48 @@
 
                 <div class="form-control w-full">
                     <label class="label font-semibold">
-                        <span class="label-text">Status Kebugaran Kerja (Fit Status) <span class="text-error">*</span></span>
+                        <span class="label-text">Status Kebugaran Kerja (Fit Status)</span>
                     </label>
-                    <select wire:model.live="fit_status" class="select select-bordered w-full @error('fit_status') select-error @enderror">
-                        <option value="">-- Pilih Status Kebugaran --</option>
-                        <option value="fit_to_work">Fit To Work (Sehat)</option>
-                        <option value="fit_with_notes">Fit With Notes (Fit dengan Catatan/Batasan)</option>
-                        <option value="temporary_unfit">Temporary Unfit (Tidak Fit Sementara)</option>
-                        <option value="unfit">Unfit (Tidak Fit Permanen)</option>
-                    </select>
-                    @error('fit_status') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                    <div class="p-3 bg-base-50 border border-base-200 rounded-lg">
+                        {{ $fit_status ? str_replace('_', ' ', strtoupper($fit_status)) : '-' }}
+                    </div>
                 </div>
 
                 @if($fit_status === 'fit_with_notes')
                 <div class="form-control w-full">
                     <label class="label font-semibold">
-                        <span class="label-text">Catatan Batasan Kerja (Site Consult) <span class="text-error">*</span></span>
+                        <span class="label-text">Catatan Batasan Kerja (Site Consult)</span>
                     </label>
-                    <textarea wire:model="restriction_notes" class="textarea textarea-bordered h-24 @error('restriction_notes') textarea-error @enderror" placeholder="Contoh: Tidak boleh mengangkat beban lebih dari 10kg, tidak boleh bekerja di ketinggian..."></textarea>
-                    @error('restriction_notes') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                    <div class="p-3 bg-base-50 border border-base-200 rounded-lg min-h-[4rem]">
+                        {{ $restriction_notes ?: '-' }}
+                    </div>
                 </div>
                 @endif
 
                 @if($fit_status === 'temporary_unfit')
                 <div class="form-control w-full">
                     <label class="label font-semibold">
-                        <span class="label-text">Jadwal MCU Follow Up <span class="text-error">*</span></span>
+                        <span class="label-text">Jadwal MCU Follow Up</span>
                     </label>
-                    <input type="date" wire:model="follow_up_date" class="input input-bordered w-full @error('follow_up_date') input-error @enderror" />
-                    @error('follow_up_date') <span class="text-error text-sm mt-1">{{ $message }}</span> @enderror
+                    <div class="p-3 bg-base-50 border border-base-200 rounded-lg">
+                        {{ $follow_up_date ? \Carbon\Carbon::parse($follow_up_date)->translatedFormat('d F Y') : '-' }}
+                    </div>
                 </div>
                 @endif
 
                 <div class="form-control w-full">
                     <label class="label font-semibold">
-                        <span class="label-text">Catatan Internal Dokter (Opsional)</span>
+                        <span class="label-text">Catatan Internal Dokter</span>
                     </label>
-                    <textarea wire:model="doctor_notes" class="textarea textarea-bordered h-20" placeholder="Catatan medis tambahan (hanya dilihat oleh tim medis)..."></textarea>
+                    <div class="p-3 bg-base-50 border border-base-200 rounded-lg min-h-[4rem] prose prose-sm max-w-none">
+                        {!! $doctor_notes ?: '-' !!}
+                    </div>
                 </div>
 
             </div>
 
             <div class="modal-action mt-6 border-t pt-4">
-                <button wire:click="closeReviewModal" class="btn btn-ghost">Batal</button>
-
-                <button wire:click="saveReview" class="btn btn-primary" wire:loading.attr="disabled">
-                    <span wire:loading wire:target="saveReview" class="loading loading-spinner loading-sm"></span>
-                    Simpan & Kirim Notifikasi
-                </button>
+                <button wire:click="closeReviewModal" class="btn btn-ghost">Tutup</button>
             </div>
 
         </div>

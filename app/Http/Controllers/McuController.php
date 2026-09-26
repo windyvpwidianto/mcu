@@ -10,7 +10,7 @@ class McuController extends Controller
 {
     public function printFitLetter($id)
     {
-        $mcuResult = McuResult::with(['participant.employee', 'participant.schedule'])->findOrFail($id);
+        $mcuResult = McuResult::with(['record.employee', 'record.schedule'])->findOrFail($id);
 
         // Hanya cetak jika statusnya fit_to_work atau fit_with_notes
         if (!in_array($mcuResult->status, ['fit_to_work', 'fit_with_notes'])) {

@@ -19,7 +19,7 @@
                         {{ $result->masterData?->employee_name ?? $result->record?->employee?->name ?? 'Tidak diketahui' }}
                     </td>
                     <td class="px-4 py-3 text-gray-600">
-                        {{ $result->masterData?->mcu_date ? $result->masterData->mcu_date->format('d M Y') : ($result->record?->schedule?->schedule_date ? $result->record->schedule->schedule_date->format('d M Y') : '-') }}
+                        {{ $result->record?->mcu_date ? \Carbon\Carbon::parse($result->record->mcu_date)->translatedFormat('d F Y') : '-' }}
                     </td>
                     <td class="px-4 py-3">
                         @if($result->status)

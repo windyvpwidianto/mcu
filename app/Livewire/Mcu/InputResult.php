@@ -90,12 +90,12 @@ class InputResult extends Component
         $query = McuRecord::where(function ($q) {
                 $q->whereDoesntHave('result')
                   ->orWhereHas('result', function ($r) {
-                      $r->whereNull('result_document')->where('status', 'not_examined');
+                      $r->whereNull('result_document');
                   });
             })
             ->has('employee') // Sembunyikan data "Unknown" (Karyawan yang sudah terhapus)
             ->whereIn('attendance_status', [McuRecord::ATTENDANCE_SCHEDULED, McuRecord::ATTENDANCE_PRESENT])
-            ->whereIn('process_status', [McuRecord::PROCESS_SCHEDULED, McuRecord::PROCESS_COMPLETED])
+            ->where('process_status', McuRecord::PROCESS_SCHEDULED)
             ->where('mcu_year', $today->year)
             ->with(['employee', 'schedule'])
             ->orderBy('mcu_date', 'asc');

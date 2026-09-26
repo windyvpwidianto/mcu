@@ -61,10 +61,19 @@
                                         <td>{{ $participant->schedule_date }}</td>
 
                                         <td>
-                                            {{-- Contoh pembuatan badge yang dinamis, atau gunakan bawaan Anda yang statis --}}
-                                            <span class="badge badge-warning badge-xs">
-                                                Belum Hadir
-                                            </span>
+                                            @if($participant->attendance === 'present')
+                                                <span class="badge badge-success badge-xs">Hadir</span>
+                                            @elseif($participant->attendance === 'scheduled')
+                                                <span class="badge badge-warning badge-xs">Belum Hadir</span>
+                                            @else
+                                                <span class="badge badge-neutral badge-xs">{{ ucfirst($participant->attendance) }}</span>
+                                            @endif
+                                            
+                                            @if($participant->process === 'scheduled')
+                                                <span class="badge badge-info badge-xs">Menunggu Pelaksanaan</span>
+                                            @else
+                                                <span class="badge badge-ghost badge-xs">{{ ucfirst($participant->process) }}</span>
+                                            @endif
                                         </td>
                                     </tr>
                                     @empty

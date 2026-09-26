@@ -37,13 +37,15 @@ class InputResult extends Component
         $path = $this->result_document->store('mcu_results', 'local');
 
         // Simpan ke database dengan status langsung 'pending_review' (Sesuai flowchart)
-        McuResult::create([
-            'mcu_record_id' => $this->participant_id,
-            'result_document' => $path,
-            'admin_notes' => $this->admin_notes,
-            'workflow_status'    => 'pending_doctor', // Mengisi status alur kerja
-            'status'             => null,             // Status medis dikosongkan dulu karena belum direview dokter
-        ]);
+        McuResult::updateOrCreate(
+            ['mcu_record_id' => $this->participant_id],
+            [
+                'result_document' => $path,
+                'admin_notes' => $this->admin_notes,
+                'workflow_status'    => 'pending_doctor', // Mengisi status alur kerja
+                'status'             => null,             // Status medis dikosongkan dulu karena belum direview dokter
+            ]
+        );
 
         // Update status di mcu_records menjadi hadir dan selesai
         McuRecord::where('id', $this->participant_id)->update([
@@ -85,10 +87,15 @@ class InputResult extends Component
         $today = Carbon::today();
         // 1. Mulai query dasar: Ambil peserta yang belum memiliki hasil MCU
         //    serta hanya menampilkan yang masih berstatus 'scheduled' (Waiting & Menunggu Pelaksana)
-        $query = McuRecord::whereDoesntHave('result')
+        $query = McuRecord::where(function ($q) {
+                $q->whereDoesntHave('result')
+                  ->orWhereHas('result', function ($r) {
+                      $r->whereNull('result_document')->where('status', 'not_examined');
+                  });
+            })
             ->has('employee') // Sembunyikan data "Unknown" (Karyawan yang sudah terhapus)
-            ->where('attendance_status', McuRecord::ATTENDANCE_SCHEDULED)
-            ->where('process_status', McuRecord::PROCESS_SCHEDULED)
+            ->whereIn('attendance_status', [McuRecord::ATTENDANCE_SCHEDULED, McuRecord::ATTENDANCE_PRESENT])
+            ->whereIn('process_status', [McuRecord::PROCESS_SCHEDULED, McuRecord::PROCESS_COMPLETED])
             ->where('mcu_year', $today->year)
             ->with(['employee', 'schedule'])
             ->orderBy('mcu_date', 'asc');
@@ -114,7 +121,9 @@ class InputResult extends Component
                 'name'          => ($p->employee?->name ?? 'Unknown') . ' - ' . $date, // Untuk Searchable Select
                 'raw_name'      => $p->employee?->name ?? 'Unknown',                 // Untuk Tabel
                 'schedule_date' => $date,                              // Untuk Tabel
-                'status'        => $p->notification_status ?? 'pending' // (Opsional) Ambil status dari DB
+                'status'        => $p->notification_status ?? 'pending', // (Opsional) Ambil status dari DB
+                'attendance'    => $p->attendance_status,
+                'process'       => $p->process_status,
             ];
         });
 

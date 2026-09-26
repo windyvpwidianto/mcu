@@ -40,9 +40,8 @@
             <div class="card bg-base-100 shadow-sm border border-base-200">
                 <div class="card-body">
                     <h2 class="card-title text-xl mb-4">Daftar Peserta MCU (Menunggu Review Dokter)</h2>
-                    <x-mcu.layout>
-                        <div class="overflow-x-auto">
-                            <table class="table table-zebra table-sm">
+                        <div class="overflow-x-auto w-full">
+                            <table class="table table-zebra table-sm w-full">
                                 <thead>
                                     <tr class="bg-base-200">
                                         <th>#</th>
@@ -58,22 +57,24 @@
 
                                         <td class="font-medium">{{ $participant->raw_name }}</td>
 
-                                        <td>{{ $participant->schedule_date }}</td>
+                                        <td class="whitespace-nowrap">{{ $participant->schedule_date }}</td>
 
                                         <td>
-                                            @if($participant->attendance === 'present')
-                                                <span class="badge badge-success badge-xs">Hadir</span>
-                                            @elseif($participant->attendance === 'scheduled')
-                                                <span class="badge badge-warning badge-xs">Belum Hadir</span>
-                                            @else
-                                                <span class="badge badge-neutral badge-xs">{{ ucfirst($participant->attendance) }}</span>
-                                            @endif
-                                            
-                                            @if($participant->process === 'scheduled')
-                                                <span class="badge badge-info badge-xs">Menunggu Pelaksanaan</span>
-                                            @else
-                                                <span class="badge badge-ghost badge-xs">{{ ucfirst($participant->process) }}</span>
-                                            @endif
+                                            <div class="flex flex-col gap-1 items-start">
+                                                @if($participant->attendance === 'present')
+                                                    <span class="badge badge-success badge-xs">Hadir</span>
+                                                @elseif($participant->attendance === 'scheduled')
+                                                    <span class="badge badge-warning badge-xs">Belum Hadir</span>
+                                                @else
+                                                    <span class="badge badge-neutral badge-xs">{{ ucfirst($participant->attendance) }}</span>
+                                                @endif
+                                                
+                                                @if($participant->process === 'scheduled')
+                                                    <span class="badge badge-info badge-xs text-[10px]">Menunggu Pelaksanaan</span>
+                                                @else
+                                                    <span class="badge badge-ghost badge-xs">{{ ucfirst($participant->process) }}</span>
+                                                @endif
+                                            </div>
                                         </td>
                                     </tr>
                                     @empty
@@ -88,7 +89,6 @@
                         <div class="mt-4">
                             {{ $formattedParticipants->links() }}
                         </div>
-                    </x-mcu.layout>
                 </div>
             </div>
         </section>

@@ -22,7 +22,7 @@
                         @forelse($pendingReviews as $result)
                         <tr>
                             <td class="font-bold">{{ $result->record->employee->name ?? '-' }}</td>
-                            <td>{{ $result->record->schedule ? $result->record->schedule->schedule_date->format('d M Y') : '-' }}</td>
+                            <td>{{ $result->record->mcu_date ? \Carbon\Carbon::parse($result->record->mcu_date)->translatedFormat('d F Y') : '-' }}</td>
                             <td>
                                 <a href="{{ route('mcu.document.secure-view', \Illuminate\Support\Facades\Crypt::encryptString($result->result_document)) }}" target="_blank" class="btn btn-sm btn-outline btn-info">Lihat Dokumen</a>
                             </td>

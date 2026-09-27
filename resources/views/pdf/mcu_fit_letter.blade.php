@@ -26,10 +26,10 @@
         /* Fixed Footer */
         footer {
             position: fixed;
-            bottom: -120px; /* Offset into the bottom margin */
-            left: 0px;
-            right: 0px;
-            height: 100px;
+            bottom: -140px;
+            left: -40px;
+            right: -40px;
+            height: 120px;
         }
 
         .header-table {
@@ -186,19 +186,30 @@
         }
         
         .footer-note {
-            margin-bottom: 10px;
-            font-size: 11px;
+            margin-bottom: 6px;
+            padding-left: 40px;
+            padding-right: 40px;
+            font-size: 10px;
         }
         
         .footer-table {
             width: 100%;
             border-collapse: collapse;
             font-size: 9px;
-            border: 1px solid #ccc;
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
+            border-left: none;
+            border-right: none;
         }
         .footer-table td {
-            border: 1px solid #ccc;
-            padding: 3px 5px;
+            border: 1px solid #94a3b8;
+            padding: 3px 6px;
+        }
+        .footer-table td:first-child {
+            padding-left: 40px;
+        }
+        .footer-table td:last-child {
+            padding-right: 40px;
         }
         .red-text {
             color: red;

@@ -95,26 +95,52 @@
         .letter-footer-locked {
             user-select: none;
             cursor: not-allowed !important;
-            margin-top: 25px;
+            margin-top: 30px;
+            margin-left: -20mm;
+            margin-right: -20mm;
+            margin-bottom: -20mm;
+            width: calc(100% + 40mm);
             position: relative;
+            background: #ffffff;
+            box-sizing: border-box;
         }
 
         .letter-footer-locked .footer-note {
             margin-bottom: 6px;
+            padding: 0 20mm;
             font-size: 10px;
             color: #475569;
         }
 
+        .a4-sheet .letter-footer-locked .footer-table,
         .letter-footer-locked .footer-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 9px;
-            border: 1px solid #ccc;
+            font-size: 9.5px;
+            border-top: 1.5px solid #000;
+            border-bottom: 1.5px solid #000;
+            border-left: none;
+            border-right: none;
+            background: #ffffff;
+            margin-top: 0;
         }
 
+        .a4-sheet .letter-footer-locked .footer-table td,
         .letter-footer-locked .footer-table td {
-            border: 1px solid #ccc;
-            padding: 3px 5px;
+            border: 1px solid #cbd5e1;
+            padding: 4px 8px;
+            font-size: 9.5px;
+            line-height: 1.35;
+        }
+
+        .a4-sheet .letter-footer-locked .footer-table td:first-child,
+        .letter-footer-locked .footer-table td:first-child {
+            padding-left: 20mm;
+        }
+
+        .a4-sheet .letter-footer-locked .footer-table td:last-child,
+        .letter-footer-locked .footer-table td:last-child {
+            padding-right: 20mm;
         }
 
         /* Styling inside the letter */

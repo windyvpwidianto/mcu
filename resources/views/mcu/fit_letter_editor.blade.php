@@ -125,11 +125,29 @@
         .a4-sheet .header-table {
             width: 100%;
             border-bottom: 1.5px solid #000;
-            margin-bottom: 16px;
-            padding-bottom: 6px;
+            margin-bottom: 18px;
+            padding-bottom: 8px;
         }
 
         .a4-sheet .header-table td {
+            vertical-align: middle;
+        }
+
+        .a4-sheet .header-table .logo-left {
+            width: 22%;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .a4-sheet .header-table .header-text {
+            width: 56%;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .a4-sheet .header-table .logo-right {
+            width: 22%;
+            text-align: center;
             vertical-align: middle;
         }
 
@@ -512,23 +530,23 @@
             <div class="letter-header-locked" contenteditable="false" title="Header Resmi Dokumen (Terkunci)">
                 <table class="header-table">
                     <tr>
-                        <td class="logo-left" style="width: 25%; text-align: left; vertical-align: middle;">
+                        <td class="logo-left" style="width: 22%; text-align: center; vertical-align: middle;">
                             @if(!empty($logoMsm))
-                                <img src="{{ $logoMsm }}" height="32" style="height: 32px; max-height: 32px; width: auto; object-fit: contain; vertical-align: middle;" alt="Logo PT MSM">
+                                <img src="{{ $logoMsm }}" height="46" style="height: 46px; max-height: 46px; width: auto; object-fit: contain; vertical-align: middle; display: inline-block;" alt="Logo PT MSM">
                             @else
-                                <img src="{{ asset('images/logo-msm.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto; object-fit: contain; vertical-align: middle;" alt="Logo PT MSM">
+                                <img src="{{ asset('images/logo-msm.png') }}" height="46" style="height: 46px; max-height: 46px; width: auto; object-fit: contain; vertical-align: middle; display: inline-block;" alt="Logo PT MSM">
                             @endif
                         </td>
-                        <td class="header-text" style="text-align: center; width: 50%; vertical-align: middle;">
-                            <h1 style="font-size: 13.5px; font-weight: bold; margin: 0; padding: 0; letter-spacing: 0.5px; color: #0f172a;">TOKA TINDUNG PROJECT</h1>
+                        <td class="header-text" style="text-align: center; width: 56%; vertical-align: middle;">
+                            <h1 style="font-size: 14px; font-weight: bold; margin: 0; padding: 0; letter-spacing: 0.5px; color: #0f172a;">TOKA TINDUNG PROJECT</h1>
                             <p style="font-size: 11px; font-weight: bold; margin: 2px 0 1px 0; color: #1e293b;">Fitness for Work Certificate</p>
                             <p class="doc-num" style="font-size: 9.5px; color: #64748b; margin: 0; font-family: 'Times New Roman', Times, serif;">TT-OHS-FRO-033A</p>
                         </td>
-                        <td class="logo-right" style="text-align: right; width: 25%; vertical-align: middle;">
+                        <td class="logo-right" style="text-align: center; width: 22%; vertical-align: middle;">
                             @if(!empty($logoArchi))
-                                <img src="{{ $logoArchi }}" height="32" style="height: 32px; max-height: 32px; width: auto; object-fit: contain; vertical-align: middle;" alt="Logo Archi">
+                                <img src="{{ $logoArchi }}" height="46" style="height: 46px; max-height: 46px; width: auto; object-fit: contain; vertical-align: middle; display: inline-block;" alt="Logo Archi">
                             @else
-                                <img src="{{ asset('images/logo-archi.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto; object-fit: contain; vertical-align: middle;" alt="Logo Archi">
+                                <img src="{{ asset('images/logo-archi.png') }}" height="46" style="height: 46px; max-height: 46px; width: auto; object-fit: contain; vertical-align: middle; display: inline-block;" alt="Logo Archi">
                             @endif
                         </td>
                     </tr>

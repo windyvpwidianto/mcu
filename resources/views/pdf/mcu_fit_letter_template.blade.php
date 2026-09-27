@@ -45,15 +45,15 @@
             vertical-align: middle;
         }
         .logo-left {
-            width: 25%;
-            text-align: left;
+            width: 22%;
+            text-align: center;
         }
         .logo-right {
-            width: 25%;
-            text-align: right;
+            width: 22%;
+            text-align: center;
         }
         .header-text {
-            width: 50%;
+            width: 56%;
             text-align: center;
         }
         .header-text h1 {
@@ -206,9 +206,9 @@
             <tr>
                 <td class="logo-left">
                     @if(!empty($logoMsm))
-                        <img src="{{ $logoMsm }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo PT MSM">
+                        <img src="{{ $logoMsm }}" height="46" style="height: 46px; max-height: 46px; width: auto;" alt="Logo PT MSM">
                     @else
-                        <img src="{{ public_path('images/logo-msm.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo PT MSM">
+                        <img src="{{ public_path('images/logo-msm.png') }}" height="46" style="height: 46px; max-height: 46px; width: auto;" alt="Logo PT MSM">
                     @endif
                 </td>
                 <td class="header-text">
@@ -218,9 +218,9 @@
                 </td>
                 <td class="logo-right">
                     @if(!empty($logoArchi))
-                        <img src="{{ $logoArchi }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo Archi">
+                        <img src="{{ $logoArchi }}" height="46" style="height: 46px; max-height: 46px; width: auto;" alt="Logo Archi">
                     @else
-                        <img src="{{ public_path('images/logo-archi.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo Archi">
+                        <img src="{{ public_path('images/logo-archi.png') }}" height="46" style="height: 46px; max-height: 46px; width: auto;" alt="Logo Archi">
                     @endif
                 </td>
             </tr>

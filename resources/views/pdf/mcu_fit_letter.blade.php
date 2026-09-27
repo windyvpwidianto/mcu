@@ -42,15 +42,15 @@
             vertical-align: middle;
         }
         .logo-left {
-            width: 25%;
-            text-align: left;
+            width: 22%;
+            text-align: center;
         }
         .logo-right {
-            width: 25%;
-            text-align: right;
+            width: 22%;
+            text-align: center;
         }
         .header-text {
-            width: 50%;
+            width: 56%;
             text-align: center;
         }
         .header-text h1 {
@@ -212,7 +212,7 @@
         <table class="header-table">
             <tr>
                 <td class="logo-left">
-                    <img src="{{ public_path('images/logo-msm.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo Kiri">
+                    <img src="{{ public_path('images/logo-msm.png') }}" height="46" style="height: 46px; max-height: 46px; width: auto;" alt="Logo Kiri">
                 </td>
                 <td class="header-text">
                     <h1>TOKA TINDUNG PROJECT</h1>
@@ -220,7 +220,7 @@
                     <p class="doc-num">TT-OHS-FRO-033A</p>
                 </td>
                 <td class="logo-right">
-                    <img src="{{ public_path('images/logo-archi.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo Kanan">
+                    <img src="{{ public_path('images/logo-archi.png') }}" height="46" style="height: 46px; max-height: 46px; width: auto;" alt="Logo Kanan">
                 </td>
             </tr>
         </table>

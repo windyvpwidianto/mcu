@@ -114,53 +114,24 @@ class DoctorReview extends Component
                 }
             }
 
-            // GENERATE FITNESS FOR WORK CERTIFICATE
-            if ($this->fit_status === 'fit_to_work') {
+            // GENERATE FITNESS FOR WORK CERTIFICATE & DRAFT TEMPLATE
+            if (in_array($this->fit_status, ['fit_to_work', 'fit_with_notes'])) {
                 try {
-                    $currentYear = date('Y');
-                    $currentMonth = date('m');
-                    $romans = ['01'=>'I','02'=>'II','03'=>'III','04'=>'IV','05'=>'V','06'=>'VI','07'=>'VII','08'=>'VIII','09'=>'IX','10'=>'X','11'=>'XI','12'=>'XII'];
-                    $romanMonth = $romans[$currentMonth];
-                    
-                    // Get latest number for this month and year
-                    $latestCert = \App\Models\McuResult::whereYear('reviewed_at', $currentYear)
-                        ->whereMonth('reviewed_at', $currentMonth)
-                        ->whereNotNull('certificate_number')
-                        ->orderBy('id', 'desc')
-                        ->first();
+                    $fullCertNumber = \App\Services\McuFitLetterService::generateCertificateNumber($result);
 
-                    $nextNumber = 1;
-                    if ($latestCert && preg_match('/^(\d{3})\//', $latestCert->certificate_number, $matches)) {
-                        $nextNumber = intval($matches[1]) + 1;
-                    }
-                    
-                    $certNumberStr = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-                    $fullCertNumber = "{$certNumberStr}/KT/MCU/{$romanMonth}/{$currentYear}";
-
-                    $employeeName = $result->record?->employee?->name ?? '-';
-                    
-                    $fileName = 'Fit_to_Work_' . str_replace(' ', '_', $employeeName) . '_' . time() . '.pdf';
-                    $savePathDir = storage_path('app/public/mcu_certificates/');
-                    
-                    if (!file_exists($savePathDir)) {
-                        mkdir($savePathDir, 0755, true);
-                    }
-                    
-                    // Generate PDF using DomPDF
-                    $data = [
-                        'result' => $result,
-                        'employee' => $result->record->employee,
-                        'schedule' => $result->record->schedule,
-                        'fullCertNumber' => $fullCertNumber
-                    ];
-                    
-                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.mcu_fit_letter', $data);
-                    $pdf->save($savePathDir . $fileName);
-                    
                     $result->update([
                         'certificate_number' => $fullCertNumber,
-                        'certificate_path'   => 'mcu_certificates/' . $fileName,
+                        'letter_status'      => 'draft',
+                        'letter_updated_by'  => auth()->id(),
+                        'letter_updated_at'  => now(),
                     ]);
+
+                    // Buat draft konten surat awal
+                    $draftHtml = \App\Services\McuFitLetterService::generateDefaultHtml($result);
+                    $result->update(['letter_content' => $draftHtml]);
+
+                    // Simpan PDF fisik awal ke storage
+                    \App\Services\McuFitLetterService::savePdfToStorage($result);
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('Gagal generate sertifikat MCU: ' . $e->getMessage());
                 }

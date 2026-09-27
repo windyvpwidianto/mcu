@@ -15,8 +15,10 @@ class McuResult extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'follow_up_date' => 'date',
-        'is_published' => 'boolean',
+        'follow_up_date'    => 'date',
+        'is_published'      => 'boolean',
+        'letter_updated_at' => 'datetime',
+        'reviewed_at'       => 'datetime',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -37,5 +39,15 @@ class McuResult extends Model
     public function diseaseCategories(): BelongsToMany
     {
         return $this->belongsToMany(DiseaseCategory::class, 'disease_category_mcu_result');
+    }
+
+    public function letterUpdatedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'letter_updated_by');
+    }
+
+    public function reviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
     }
 }

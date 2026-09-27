@@ -53,12 +53,24 @@
                         @endif
 
                         @if($result->workflow_status === 'reviewed' && in_array($result->status, ['fit_to_work', 'fit_with_notes']))
-                            <a href="{{ route('mcu.fit-letter', $result->id) }}" target="_blank" class="px-3 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-semibold flex items-center gap-1">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                </svg>
-                                {{ $result->certificate_path ? 'Unduh Sertifikat (PDF)' : 'Cetak Surat FIT (PDF)' }}
-                            </a>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <a href="{{ route('mcu.fit-letter.edit', $result->id) }}" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs rounded font-bold flex items-center gap-1 shadow-sm transition" title="Edit draf surat">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                    Edit Surat
+                                    <span class="text-[9px] px-1 py-0.5 rounded uppercase font-extrabold {{ ($result->letter_status ?? 'draft') === 'final' ? 'bg-emerald-700 text-white' : 'bg-amber-200 text-amber-900' }}">
+                                        {{ $result->letter_status ?? 'draft' }}
+                                    </span>
+                                </a>
+
+                                <a href="{{ route('mcu.fit-letter', $result->id) }}" target="_blank" class="px-2.5 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-semibold flex items-center gap-1 shadow-sm transition" title="Cetak / Unduh PDF">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                    PDF
+                                </a>
+                            </div>
                         @endif
                     </td>
                 </tr>
@@ -131,17 +143,24 @@
             </div>
 
             <div class="modal-action mt-6 border-t pt-4 flex justify-between items-center w-full">
-                <div>
+                <div class="flex items-center gap-2">
                     @if($selectedResultId && in_array($fit_status, ['fit_to_work', 'fit_with_notes']))
                         @php
                             $currentResult = collect($mcuResults->items())->firstWhere('id', $selectedResultId);
                         @endphp
                         @if($currentResult)
-                            <a href="{{ route('mcu.fit-letter', $currentResult->id) }}" target="_blank" class="btn btn-success btn-sm text-white flex items-center gap-2">
+                            <a href="{{ route('mcu.fit-letter.edit', $currentResult->id) }}" class="btn btn-warning btn-sm text-slate-900 font-bold flex items-center gap-2 shadow-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                                Edit Draft Surat
+                            </a>
+
+                            <a href="{{ route('mcu.fit-letter', $currentResult->id) }}" target="_blank" class="btn btn-success btn-sm text-white flex items-center gap-2 shadow-sm">
                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
                                 </svg>
-                                {{ $currentResult->certificate_path ? 'Unduh Sertifikat (PDF)' : 'Cetak Surat FIT (PDF)' }}
+                                Cetak PDF
                             </a>
                         @endif
                     @endif

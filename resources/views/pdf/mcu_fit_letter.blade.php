@@ -34,7 +34,7 @@
 
         .header-table {
             width: 100%;
-            border-bottom: 2px solid #ccc;
+            border-bottom: 1.5px solid #000;
             margin-bottom: 15px;
             padding-bottom: 5px;
         }
@@ -55,15 +55,16 @@
         }
         .header-text h1 {
             margin: 0;
-            font-size: 18px;
+            font-size: 15px;
             text-transform: uppercase;
         }
         .header-text p {
             margin: 2px 0;
-            font-size: 14px;
+            font-size: 12px;
             font-weight: bold;
         }
         .header-text p.doc-num {
+            font-size: 10px;
             font-weight: normal;
         }
         
@@ -130,37 +131,28 @@
             display: inline-block;
             margin-right: 20px;
         }
-        .box-dark {
+        .box-white, .box-dark, .box-light {
             display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: #666;
-            color: #fff;
+            width: 13px;
+            height: 13px;
+            border: 1.5px solid #000;
+            background-color: #ffffff;
+            color: #000000;
             text-align: center;
-            font-size: 10px;
-            line-height: 10px;
-            font-weight: bold;
-            border: 2px solid #999;
-            margin-right: 4px;
-        }
-        .box-light {
-            display: inline-block;
-            width: 10px;
-            height: 10px;
-            background-color: #ccc;
-            border: 2px solid #999;
-            margin-right: 4px;
-        }
-        .box-white {
-            display: inline-block;
-            width: 12px;
-            height: 12px;
-            border: 1px solid #000;
-            text-align: center;
-            font-size: 12px;
-            line-height: 12px;
+            font-size: 11px;
+            line-height: 13px;
             font-weight: bold;
             margin-right: 6px;
+            vertical-align: middle;
+            border-radius: 2px;
+        }
+        .is-strikethrough {
+            text-decoration: line-through;
+            color: #64748b;
+        }
+        .is-strikethrough .opt-label,
+        .is-strikethrough .en-label {
+            text-decoration: line-through;
         }
 
         .result-section {
@@ -220,7 +212,7 @@
         <table class="header-table">
             <tr>
                 <td class="logo-left">
-                    <img src="{{ public_path('images/logo-msm.png') }}" height="40" alt="Logo Kiri">
+                    <img src="{{ public_path('images/logo-msm.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo Kiri">
                 </td>
                 <td class="header-text">
                     <h1>TOKA TINDUNG PROJECT</h1>
@@ -228,7 +220,7 @@
                     <p class="doc-num">TT-OHS-FRO-033A</p>
                 </td>
                 <td class="logo-right">
-                    <img src="{{ public_path('images/logo-archi.png') }}" height="40" alt="Logo Kanan">
+                    <img src="{{ public_path('images/logo-archi.png') }}" height="32" style="height: 32px; max-height: 32px; width: auto;" alt="Logo Kanan">
                 </td>
             </tr>
         </table>
@@ -313,14 +305,36 @@
                 <td class="label-col">Kategori/<span class="en-label">Category</span></td>
                 <td class="colon-col">:</td>
                 <td class="val-col">
-                    <div class="checkbox-row">
-                        <span class="checkbox-container"><span class="box-dark">✓</span> Lengkap/<span class="en-label">Full</span></span>
-                        <span class="checkbox-container"><span class="box-light"></span> Pemeriksaan di site/<span class="en-label">Site Exam</span></span>
-                    </div>
-                    <div class="checkbox-row">
-                        <span class="checkbox-container"><span class="box-dark">✓</span> Resiko Tinggi/<span class="en-label">High Risk*</span></span>
-                        <span class="checkbox-container"><span class="box-light"></span> Resiko Rendah/<span class="en-label">Low Risk</span></span>
-                    </div>
+                    <table class="category-table" style="width: 100%; border-collapse: collapse;">
+                        <tr>
+                            <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <span class="checkbox-container" data-cat="lengkap">
+                                    <span class="box-white">✓</span>
+                                    <span class="opt-label">Lengkap/<span class="en-label">Full</span></span>
+                                </span>
+                            </td>
+                            <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <span class="checkbox-container is-strikethrough" data-cat="site" style="text-decoration: line-through;">
+                                    <span class="box-white"></span>
+                                    <span class="opt-label" style="text-decoration: line-through;">Pemeriksaan di site/<span class="en-label" style="text-decoration: line-through;">Site Exam</span></span>
+                                </span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <span class="checkbox-container is-strikethrough" data-cat="high_risk" style="text-decoration: line-through;">
+                                    <span class="box-white"></span>
+                                    <span class="opt-label" style="text-decoration: line-through;">Resiko Tinggi/<span class="en-label" style="text-decoration: line-through;">High Risk*</span></span>
+                                </span>
+                            </td>
+                            <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <span class="checkbox-container is-strikethrough" data-cat="low_risk" style="text-decoration: line-through;">
+                                    <span class="box-white"></span>
+                                    <span class="opt-label" style="text-decoration: line-through;">Resiko Rendah/<span class="en-label" style="text-decoration: line-through;">Low Risk</span></span>
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
                 </td>
             </tr>
         </table>

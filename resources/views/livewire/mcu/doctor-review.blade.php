@@ -165,7 +165,7 @@
             @endif
 
             <fieldset class="mb-4 fieldset md:col-span-2" wire:key="box-doctor_notes">
-                <x-form.label label="Catatan Tambahan Dokter" required />
+                <x-form.label label="Catatan Tambahan Dokter" :required="$fit_status !== 'fit_to_work'" />
                 <div x-data="ckeditorHelper('doctor_notes')" wire:ignore>
                     <div x-ref="editorElement" data-placeholder="{{ __('Masukkan Catatan Tambahan Dokter...') }}"></div>
                 </div>

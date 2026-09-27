@@ -65,7 +65,7 @@ class DoctorReview extends Component
     {
         $this->validate([
             'fit_status'        => 'required|in:fit_to_work,fit_with_notes,temporary_unfit,unfit',
-            'doctor_notes'      => 'nullable|string',
+            'doctor_notes'      => 'required_unless:fit_status,fit_to_work|string|nullable',
         ]);
 
         if (!$this->selectedResultId) {
@@ -117,55 +117,50 @@ class DoctorReview extends Component
             // GENERATE FITNESS FOR WORK CERTIFICATE
             if ($this->fit_status === 'fit_to_work') {
                 try {
-                    $templatePath = storage_path('app/template/TT-OHS-FRO-033A Fitness for Work Certificate (Rev1).docx');
+                    $currentYear = date('Y');
+                    $currentMonth = date('m');
+                    $romans = ['01'=>'I','02'=>'II','03'=>'III','04'=>'IV','05'=>'V','06'=>'VI','07'=>'VII','08'=>'VIII','09'=>'IX','10'=>'X','11'=>'XI','12'=>'XII'];
+                    $romanMonth = $romans[$currentMonth];
                     
-                    if (file_exists($templatePath)) {
-                        $currentYear = date('Y');
-                        $currentMonth = date('m');
-                        $romans = ['01'=>'I','02'=>'II','03'=>'III','04'=>'IV','05'=>'V','06'=>'VI','07'=>'VII','08'=>'VIII','09'=>'IX','10'=>'X','11'=>'XI','12'=>'XII'];
-                        $romanMonth = $romans[$currentMonth];
-                        
-                        // Get latest number for this month and year
-                        $latestCert = \App\Models\McuResult::whereYear('reviewed_at', $currentYear)
-                            ->whereMonth('reviewed_at', $currentMonth)
-                            ->whereNotNull('certificate_number')
-                            ->orderBy('id', 'desc')
-                            ->first();
+                    // Get latest number for this month and year
+                    $latestCert = \App\Models\McuResult::whereYear('reviewed_at', $currentYear)
+                        ->whereMonth('reviewed_at', $currentMonth)
+                        ->whereNotNull('certificate_number')
+                        ->orderBy('id', 'desc')
+                        ->first();
 
-                        $nextNumber = 1;
-                        if ($latestCert && preg_match('/^(\d{3})\//', $latestCert->certificate_number, $matches)) {
-                            $nextNumber = intval($matches[1]) + 1;
-                        }
-                        
-                        $certNumberStr = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
-                        $fullCertNumber = "{$certNumberStr}/KT/MCU/{$romanMonth}/{$currentYear}";
-
-                        $templateProcessor = new \PhpOffice\PhpWord\TemplateProcessor($templatePath);
-                        
-                        $employeeName = $result->record?->employee?->name ?? '-';
-                        $employeeId = $result->record?->employee?->nik ?? $result->record?->employee?->employee_id ?? '-';
-                        $department = $result->record?->employee?->department_name ?? '-';
-                        
-                        $templateProcessor->setValue('NOMOR_SURAT', $fullCertNumber);
-                        $templateProcessor->setValue('NAMA_KARYAWAN', htmlspecialchars($employeeName));
-                        $templateProcessor->setValue('NIK', htmlspecialchars($employeeId));
-                        $templateProcessor->setValue('DEPARTEMEN', htmlspecialchars($department));
-                        $templateProcessor->setValue('TANGGAL', date('d F Y'));
-                        
-                        $fileName = 'Fit_to_Work_' . str_replace(' ', '_', $employeeName) . '_' . time() . '.docx';
-                        $savePathDir = storage_path('app/public/mcu_certificates/');
-                        
-                        if (!file_exists($savePathDir)) {
-                            mkdir($savePathDir, 0755, true);
-                        }
-                        
-                        $templateProcessor->saveAs($savePathDir . $fileName);
-                        
-                        $result->update([
-                            'certificate_number' => $fullCertNumber,
-                            'certificate_path'   => 'mcu_certificates/' . $fileName,
-                        ]);
+                    $nextNumber = 1;
+                    if ($latestCert && preg_match('/^(\d{3})\//', $latestCert->certificate_number, $matches)) {
+                        $nextNumber = intval($matches[1]) + 1;
                     }
+                    
+                    $certNumberStr = str_pad($nextNumber, 3, '0', STR_PAD_LEFT);
+                    $fullCertNumber = "{$certNumberStr}/KT/MCU/{$romanMonth}/{$currentYear}";
+
+                    $employeeName = $result->record?->employee?->name ?? '-';
+                    
+                    $fileName = 'Fit_to_Work_' . str_replace(' ', '_', $employeeName) . '_' . time() . '.pdf';
+                    $savePathDir = storage_path('app/public/mcu_certificates/');
+                    
+                    if (!file_exists($savePathDir)) {
+                        mkdir($savePathDir, 0755, true);
+                    }
+                    
+                    // Generate PDF using DomPDF
+                    $data = [
+                        'result' => $result,
+                        'employee' => $result->record->employee,
+                        'schedule' => $result->record->schedule,
+                        'fullCertNumber' => $fullCertNumber
+                    ];
+                    
+                    $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('pdf.mcu_fit_letter', $data);
+                    $pdf->save($savePathDir . $fileName);
+                    
+                    $result->update([
+                        'certificate_number' => $fullCertNumber,
+                        'certificate_path'   => 'mcu_certificates/' . $fileName,
+                    ]);
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('Gagal generate sertifikat MCU: ' . $e->getMessage());
                 }

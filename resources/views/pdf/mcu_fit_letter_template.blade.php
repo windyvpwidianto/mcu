@@ -129,21 +129,26 @@
             display: inline-block;
             margin-right: 20px;
             cursor: pointer;
+            white-space: nowrap;
+        }
+        .opt-label, .en-label {
+            white-space: nowrap;
         }
         .box-white, .box-dark, .box-light {
             display: inline-block;
-            width: 13px;
-            height: 13px;
+            width: 16px;
+            height: 16px;
             border: 1.5px solid #000;
             background-color: #ffffff;
             color: #000000;
             text-align: center;
-            font-size: 11px;
-            line-height: 13px;
+            font-size: 14px;
+            line-height: 16px;
             font-weight: bold;
             margin-right: 6px;
             vertical-align: middle;
             border-radius: 2px;
+            font-family: "DejaVu Sans", sans-serif;
         }
         .is-strikethrough {
             text-decoration: line-through;
@@ -316,13 +321,13 @@
                     <td class="val-col">
                         <table class="category-table" style="width: 100%; border-collapse: collapse;">
                             <tr>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 45%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container" data-cat="lengkap">
                                         <span class="box-white" contenteditable="false">✓</span>
                                         <span class="opt-label">Lengkap/<span class="en-label">Full</span></span>
                                     </span>
                                 </td>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 55%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container is-strikethrough" data-cat="site" style="text-decoration: line-through;">
                                         <span class="box-white" contenteditable="false"></span>
                                         <span class="opt-label" style="text-decoration: line-through;">Pemeriksaan di site/<span class="en-label" style="text-decoration: line-through;">Site Exam</span></span>
@@ -330,13 +335,13 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 45%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container is-strikethrough" data-cat="high_risk" style="text-decoration: line-through;">
                                         <span class="box-white" contenteditable="false"></span>
                                         <span class="opt-label" style="text-decoration: line-through;">Resiko Tinggi/<span class="en-label" style="text-decoration: line-through;">High Risk*</span></span>
                                     </span>
                                 </td>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 55%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container is-strikethrough" data-cat="low_risk" style="text-decoration: line-through;">
                                         <span class="box-white" contenteditable="false"></span>
                                         <span class="opt-label" style="text-decoration: line-through;">Resiko Rendah/<span class="en-label" style="text-decoration: line-through;">Low Risk</span></span>

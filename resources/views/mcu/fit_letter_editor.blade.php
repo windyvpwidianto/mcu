@@ -233,6 +233,7 @@
             border-radius: 4px;
             transition: all 0.15s ease;
             user-select: none;
+            white-space: nowrap;
         }
         .a4-sheet .checkbox-container:hover {
             background-color: #f1f5f9;
@@ -260,16 +261,16 @@
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
-            width: 14px !important;
-            height: 14px !important;
-            min-width: 14px !important;
-            min-height: 14px !important;
+            width: 16px !important;
+            height: 16px !important;
+            min-width: 16px !important;
+            min-height: 16px !important;
             border: 1.5px solid #0f172a !important;
             background-color: #ffffff !important;
             color: #0f172a !important;
             text-align: center !important;
-            font-size: 11px !important;
-            line-height: 14px !important;
+            font-size: 14px !important;
+            line-height: 16px !important;
             font-weight: 900 !important;
             margin-right: 8px !important;
             vertical-align: middle !important;
@@ -769,13 +770,13 @@
                     catCell.innerHTML = `
                         <table class="category-table" style="width: 100%; border-collapse: collapse;">
                             <tr>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 45%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container ${chosenType === 'site' ? 'is-strikethrough' : ''}" data-cat="lengkap" style="${chosenType === 'site' ? 'text-decoration: line-through;' : ''}">
                                         <span class="box-white" contenteditable="false">${chosenType === 'lengkap' ? '✓' : ''}</span>
                                         <span class="opt-label" style="${chosenType === 'site' ? 'text-decoration: line-through;' : ''}">Lengkap/<span class="en-label" style="${chosenType === 'site' ? 'text-decoration: line-through;' : ''}">Full</span></span>
                                     </span>
                                 </td>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 55%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container ${chosenType === 'lengkap' ? 'is-strikethrough' : ''}" data-cat="site" style="${chosenType === 'lengkap' ? 'text-decoration: line-through;' : ''}">
                                         <span class="box-white" contenteditable="false">${chosenType === 'site' ? '✓' : ''}</span>
                                         <span class="opt-label" style="${chosenType === 'lengkap' ? 'text-decoration: line-through;' : ''}">Pemeriksaan di site/<span class="en-label" style="${chosenType === 'lengkap' ? 'text-decoration: line-through;' : ''}">Site Exam</span></span>
@@ -783,13 +784,13 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 45%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container ${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'is-strikethrough' : ''}" data-cat="high_risk" style="${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'text-decoration: line-through;' : ''}">
                                         <span class="box-white" contenteditable="false">${(chosenType === 'site' && chosenRisk === 'high_risk') ? '✓' : ''}</span>
                                         <span class="opt-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'text-decoration: line-through;' : ''}">Resiko Tinggi/<span class="en-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'text-decoration: line-through;' : ''}">High Risk*</span></span>
                                     </span>
                                 </td>
-                                <td style="width: 50%; vertical-align: top; padding: 2px 0;">
+                                <td style="width: 55%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
                                     <span class="checkbox-container ${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'is-strikethrough' : ''}" data-cat="low_risk" style="${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'text-decoration: line-through;' : ''}">
                                         <span class="box-white" contenteditable="false">${(chosenType === 'site' && chosenRisk === 'low_risk') ? '✓' : ''}</span>
                                         <span class="opt-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'text-decoration: line-through;' : ''}">Resiko Rendah/<span class="en-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'text-decoration: line-through;' : ''}">Low Risk</span></span>

@@ -41,37 +41,49 @@
                         </span>
                         @endif
                     </td>
-                    <td class="px-4 py-3 flex gap-2 items-center">
-                        <button wire:click="openReviewModal({{ $result->id }})" class="text-indigo-600 hover:text-indigo-900 font-semibold">
-                            Lihat Detail
-                        </button>
+                    <td class="px-4 py-3">
+                        <div class="dropdown dropdown-left dropdown-bottom">
+                            <label tabindex="0" class="btn btn-sm btn-outline text-gray-600 m-0">
+                                Aksi
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </label>
+                            <ul tabindex="0" class="dropdown-content z-[50] menu p-2 shadow-lg bg-white rounded-box w-52 border border-gray-100 text-sm">
+                                <li>
+                                    <button wire:click="openReviewModal({{ $result->id }})" class="text-indigo-600 hover:bg-indigo-50 hover:text-indigo-700 font-medium">
+                                        Lihat Detail
+                                    </button>
+                                </li>
 
-                        @if($result->result_document)
-                        <a href="{{ route('mcu.document.secure-view', \Illuminate\Support\Facades\Crypt::encryptString($result->result_document)) }}" target="_blank" class="text-blue-600 hover:text-blue-900 font-semibold">
-                            Lihat Dokumen
-                        </a>
-                        @endif
+                                @if($result->result_document)
+                                <li>
+                                    <a href="{{ route('mcu.document.secure-view', \Illuminate\Support\Facades\Crypt::encryptString($result->result_document)) }}" target="_blank" class="text-blue-600 hover:bg-blue-50 hover:text-blue-700 font-medium">
+                                        Lihat Dokumen
+                                    </a>
+                                </li>
+                                @endif
 
-                        @if($result->workflow_status === 'reviewed' && in_array($result->status, ['fit_to_work', 'fit_with_notes']))
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <a href="{{ route('mcu.fit-letter.edit', $result->id) }}" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-slate-900 text-xs rounded font-bold flex items-center gap-1 shadow-sm transition" title="Edit draf surat">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                    Edit Surat
-                                    <span class="text-[9px] px-1 py-0.5 rounded uppercase font-extrabold {{ ($result->letter_status ?? 'draft') === 'final' ? 'bg-emerald-700 text-white' : 'bg-amber-200 text-amber-900' }}">
-                                        {{ $result->letter_status ?? 'draft' }}
-                                    </span>
-                                </a>
-
-                                <a href="{{ route('mcu.fit-letter', $result->id) }}" target="_blank" class="px-2.5 py-1 bg-green-600 text-white text-xs rounded hover:bg-green-700 font-semibold flex items-center gap-1 shadow-sm transition" title="Cetak / Unduh PDF">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                                    </svg>
-                                    PDF
-                                </a>
-                            </div>
-                        @endif
+                                @if($result->workflow_status === 'reviewed' && in_array($result->status, ['fit_to_work', 'fit_with_notes']))
+                                <li class="menu-title mt-1 pb-0">
+                                    <span class="text-[10px] text-gray-400 uppercase tracking-wider px-2">Surat Keterangan FIT</span>
+                                </li>
+                                <li>
+                                    <a href="{{ route('mcu.fit-letter.edit', $result->id) }}" class="text-amber-600 hover:bg-amber-50 hover:text-amber-700 font-medium justify-between">
+                                        <span>Edit Surat</span>
+                                        <span class="text-[9px] px-1 py-0.5 rounded uppercase font-extrabold {{ ($result->letter_status ?? 'draft') === 'final' ? 'bg-emerald-600 text-white' : 'bg-amber-200 text-amber-900' }}">
+                                            {{ $result->letter_status ?? 'draft' }}
+                                        </span>
+                                    </a>
+                                </li>
+                                <li>
+                                    <a href="{{ route('mcu.fit-letter', $result->id) }}" target="_blank" class="text-green-600 hover:bg-green-50 hover:text-green-700 font-medium">
+                                        Cetak PDF
+                                    </a>
+                                </li>
+                                @endif
+                            </ul>
+                        </div>
                     </td>
                 </tr>
                 @empty

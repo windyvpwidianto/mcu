@@ -11,10 +11,27 @@
 
                     <form wire:submit="saveResult" class="space-y-4">
 
-                        <div class="flex  gap-4">
-                            <x-form.searchable-select-advanced label="Peserta MCU" placeholder="Cari Nama Peserta MCU..."
-                                modelsearch="searchParticipant" modelid="participant_id" :options="$formattedParticipants" :showdropdown="$showParticipantDropdown" clickaction="selectParticipant" />
-                            <x-form.upload label="Unggah Dokumen Hasil (PDF/JPG)" model="result_document" :file="$result_document" required />
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="col-span-1 md:col-span-2">
+                                <x-form.searchable-select-advanced label="Peserta MCU" placeholder="Cari Nama Peserta MCU..."
+                                    modelsearch="searchParticipant" modelid="participant_id" :options="$formattedParticipants" :showdropdown="$showParticipantDropdown" clickaction="selectParticipant" />
+                            </div>
+                            
+                            <fieldset class="w-full">
+                                <x-form.label label="Kategori MCU" required />
+                                <select wire:model="mcu_category" class="select select-bordered select-xs h-[32px] text-sm w-full">
+                                    <option value="">Pilih Kategori...</option>
+                                    <option value="New Hire">New Hire</option>
+                                    <option value="Annual">Annual</option>
+                                    <option value="Premedical">Premedical</option>
+                                    <option value="Semesterly">Semesterly</option>
+                                </select>
+                                <x-label-error :messages="$errors->get('mcu_category')" />
+                            </fieldset>
+
+                            <div class="w-full">
+                                <x-form.upload label="Unggah Dokumen Hasil (PDF/JPG)" model="result_document" :file="$result_document" required />
+                            </div>
                         </div>
 
                         <fieldset class="mb-4 fieldset md:col-span-2" wire:key="box-admin_notes">

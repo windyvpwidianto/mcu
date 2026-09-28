@@ -7,6 +7,7 @@
                 <tr>
                     <th class="px-4 py-3">Nama Karyawan</th>
                     <th class="px-4 py-3">Jadwal MCU</th>
+                    <th class="px-4 py-3">Kategori MCU</th>
                     <th class="px-4 py-3">Status Kebugaran</th>
                     <th class="px-4 py-3">Status Dokumen</th>
                     <th class="px-4 py-3">Aksi</th>
@@ -20,6 +21,13 @@
                     </td>
                     <td class="px-4 py-3 text-gray-600">
                         {{ $result->record?->mcu_date ? \Carbon\Carbon::parse($result->record->mcu_date)->translatedFormat('d F Y') : '-' }}
+                    </td>
+                    <td class="px-4 py-3">
+                        @if($result->mcu_category)
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium">{{ $result->mcu_category }}</span>
+                        @else
+                            <span class="text-gray-400 italic text-xs">-</span>
+                        @endif
                     </td>
                     <td class="px-4 py-3">
                         @if($result->status)
@@ -88,7 +96,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-500">
                         Tidak ada data MCU dengan status tersebut.
                     </td>
                 </tr>
@@ -111,6 +119,20 @@
             </h3>
 
             <div class="space-y-4">
+
+                <div class="form-control w-full">
+                    <label class="label font-semibold">
+                        <span class="label-text">Kategori MCU</span>
+                    </label>
+                    <div class="p-3 bg-base-50 border border-base-200 rounded-lg">
+                        @php $modalResult = collect($mcuResults->items())->firstWhere('id', $selectedResultId); @endphp
+                        @if($modalResult?->mcu_category)
+                            <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs font-medium">{{ $modalResult->mcu_category }}</span>
+                        @else
+                            <span class="text-gray-400 italic">-</span>
+                        @endif
+                    </div>
+                </div>
 
                 <div class="form-control w-full">
                     <label class="label font-semibold">

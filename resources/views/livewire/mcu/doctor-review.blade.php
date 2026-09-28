@@ -13,6 +13,7 @@
                     <thead>
                         <tr>
                             <th>Nama Karyawan</th>
+                            <th>Kategori MCU</th>
                             <th>Tanggal MCU</th>
                             <th>Dokumen MCU</th>
                             <th>Aksi</th>
@@ -22,6 +23,13 @@
                         @forelse($pendingReviews as $result)
                         <tr>
                             <td class="font-bold">{{ $result->record->employee->name ?? '-' }}</td>
+                            <td>
+                                @if($result->mcu_category)
+                                    <span class="badge badge-outline badge-sm">{{ $result->mcu_category }}</span>
+                                @else
+                                    -
+                                @endif
+                            </td>
                             <td>{{ $result->record->mcu_date ? \Carbon\Carbon::parse($result->record->mcu_date)->translatedFormat('d F Y') : '-' }}</td>
                             <td>
                                 <a href="{{ route('mcu.document.secure-view', \Illuminate\Support\Facades\Crypt::encryptString($result->result_document)) }}" target="_blank" class="btn btn-sm btn-outline btn-info">Lihat Dokumen</a>
@@ -43,7 +51,15 @@
 
     <flux:modal wire:model="showReviewModal" flyout variant="floating" class="md:w-lg">
 
-        <flux:heading size="lg" class="border-b pb-2">Review Status MCU</flux:heading>
+        <flux:heading size="lg" class="border-b pb-2">
+            Review Status MCU
+            @php
+                $currentResult = \App\Models\McuResult::find($selectedResultId);
+            @endphp
+            @if($currentResult && $currentResult->mcu_category)
+                <span class="badge badge-primary ml-2">{{ $currentResult->mcu_category }}</span>
+            @endif
+        </flux:heading>
 
         <form wire:submit="saveReview" class="py-4 space-y-4 ">
             @if ($errors->any())

@@ -17,6 +17,7 @@ class InputResult extends Component
     public $participant_id = null;
     public $result_document;
     public $admin_notes;
+    public $mcu_category;
     public $searchParticipant = '';
     public $showParticipantDropdown = false;
 
@@ -25,6 +26,7 @@ class InputResult extends Component
         return [
             'participant_id' => 'required|exists:mcu_records,id',
             'result_document' => 'required|mimes:pdf,jpg,jpeg,png|max:5120', // Max 5MB
+            'mcu_category' => 'required|string|in:New Hire,Annual,Premedical,Semesterly',
             'admin_notes' => 'nullable|string',
         ];
     }
@@ -41,9 +43,10 @@ class InputResult extends Component
             ['mcu_record_id' => $this->participant_id],
             [
                 'result_document' => $path,
-                'admin_notes' => $this->admin_notes,
-                'workflow_status'    => 'pending_doctor', // Mengisi status alur kerja
-                'status'             => null,             // Status medis dikosongkan dulu karena belum direview dokter
+                'mcu_category'    => $this->mcu_category,
+                'admin_notes'     => $this->admin_notes,
+                'workflow_status' => 'pending_doctor', // Mengisi status alur kerja
+                'status'          => null,             // Status medis dikosongkan dulu karena belum direview dokter
             ]
         );
 
@@ -54,7 +57,7 @@ class InputResult extends Component
         ]);
 
         session()->flash('message', 'Hasil MCU berhasil diunggah. Menunggu review Dokter.');
-        $this->reset(['participant_id', 'result_document', 'admin_notes', 'searchParticipant']);
+        $this->reset(['participant_id', 'result_document', 'mcu_category', 'admin_notes', 'searchParticipant']);
     }
 
     public function updatedSearchParticipant()

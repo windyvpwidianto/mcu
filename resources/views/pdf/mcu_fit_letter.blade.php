@@ -196,13 +196,13 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 9px;
-            border-top: 1.5px solid #94a3b8;
-            border-bottom: 1.5px solid #94a3b8;
+            border-top: 1px solid #cbd5e1;
+            border-bottom: 1px solid #cbd5e1;
             border-left: none;
             border-right: none;
         }
         .footer-table td {
-            border: 1px solid #94a3b8;
+            border: 1px solid #cbd5e1;
             padding: 3px 6px;
         }
         .footer-table td:first-child {

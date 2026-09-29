@@ -196,8 +196,8 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 9px;
-            border-top: 1.5px solid #000;
-            border-bottom: 1.5px solid #000;
+            border-top: 1.5px solid #94a3b8;
+            border-bottom: 1.5px solid #94a3b8;
             border-left: none;
             border-right: none;
         }
@@ -319,29 +319,29 @@
                     <table class="category-table" style="width: 100%; border-collapse: collapse;">
                         <tr>
                             <td style="width: 50%; vertical-align: top; padding: 2px 0;">
-                                <span class="checkbox-container" data-cat="lengkap">
-                                    <span class="box-white">✓</span>
-                                    <span class="opt-label">Lengkap/<span class="en-label">Full</span></span>
+                                <span class="checkbox-container {{ $result->mcu_category !== 'New Hire' ? 'is-strikethrough' : '' }}" data-cat="new_hire" {!! $result->mcu_category !== 'New Hire' ? 'style="text-decoration: line-through;"' : '' !!}>
+                                    <span class="box-white">{{ $result->mcu_category === 'New Hire' ? '✓' : '' }}</span>
+                                    <span class="opt-label" {!! $result->mcu_category !== 'New Hire' ? 'style="text-decoration: line-through;"' : '' !!}>New Hire</span>
                                 </span>
                             </td>
                             <td style="width: 50%; vertical-align: top; padding: 2px 0;">
-                                <span class="checkbox-container is-strikethrough" data-cat="site" style="text-decoration: line-through;">
-                                    <span class="box-white"></span>
-                                    <span class="opt-label" style="text-decoration: line-through;">Pemeriksaan di site/<span class="en-label" style="text-decoration: line-through;">Site Exam</span></span>
+                                <span class="checkbox-container {{ $result->mcu_category !== 'Annual' ? 'is-strikethrough' : '' }}" data-cat="annual" {!! $result->mcu_category !== 'Annual' ? 'style="text-decoration: line-through;"' : '' !!}>
+                                    <span class="box-white">{{ $result->mcu_category === 'Annual' ? '✓' : '' }}</span>
+                                    <span class="opt-label" {!! $result->mcu_category !== 'Annual' ? 'style="text-decoration: line-through;"' : '' !!}>Annual</span>
                                 </span>
                             </td>
                         </tr>
                         <tr>
                             <td style="width: 50%; vertical-align: top; padding: 2px 0;">
-                                <span class="checkbox-container is-strikethrough" data-cat="high_risk" style="text-decoration: line-through;">
-                                    <span class="box-white"></span>
-                                    <span class="opt-label" style="text-decoration: line-through;">Resiko Tinggi/<span class="en-label" style="text-decoration: line-through;">High Risk*</span></span>
+                                <span class="checkbox-container {{ $result->mcu_category !== 'Premedical' ? 'is-strikethrough' : '' }}" data-cat="premedical" {!! $result->mcu_category !== 'Premedical' ? 'style="text-decoration: line-through;"' : '' !!}>
+                                    <span class="box-white">{{ $result->mcu_category === 'Premedical' ? '✓' : '' }}</span>
+                                    <span class="opt-label" {!! $result->mcu_category !== 'Premedical' ? 'style="text-decoration: line-through;"' : '' !!}>Premedical</span>
                                 </span>
                             </td>
                             <td style="width: 50%; vertical-align: top; padding: 2px 0;">
-                                <span class="checkbox-container is-strikethrough" data-cat="low_risk" style="text-decoration: line-through;">
-                                    <span class="box-white"></span>
-                                    <span class="opt-label" style="text-decoration: line-through;">Resiko Rendah/<span class="en-label" style="text-decoration: line-through;">Low Risk</span></span>
+                                <span class="checkbox-container {{ $result->mcu_category !== 'Semesterly' ? 'is-strikethrough' : '' }}" data-cat="semesterly" {!! $result->mcu_category !== 'Semesterly' ? 'style="text-decoration: line-through;"' : '' !!}>
+                                    <span class="box-white">{{ $result->mcu_category === 'Semesterly' ? '✓' : '' }}</span>
+                                    <span class="opt-label" {!! $result->mcu_category !== 'Semesterly' ? 'style="text-decoration: line-through;"' : '' !!}>Semesterly</span>
                                 </span>
                             </td>
                         </tr>

@@ -280,7 +280,7 @@
                         <div class="grid grid-cols-2 gap-4 mt-4">
 
                             <fieldset class="fieldset">
-                                <x-form.label label="NIK" required />
+                                <x-form.label label="NIK" />
                                 <input type="text" wire:model.live="manual_nik"
                                     class="input input-bordered w-full focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs {{ $errors->has('manual_nik') ? 'ring-1 ring-rose-500 focus:ring-rose-500 focus:border-rose-500' : '' }}" />
                                 <x-label-error :messages="$errors->get('manual_nik')" />

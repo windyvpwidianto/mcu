@@ -117,8 +117,8 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 9.5px;
-            border-top: 1.5px solid #000;
-            border-bottom: 1.5px solid #000;
+            border-top: 1.5px solid #94a3b8;
+            border-bottom: 1.5px solid #94a3b8;
             border-left: none;
             border-right: none;
             background: #ffffff;
@@ -750,50 +750,52 @@
                 const trList = catCell.querySelectorAll('table.category-table tr');
                 if (!catCell.querySelector('.category-table') || trList.length < 2) {
                     const txt = catCell.innerText.toLowerCase();
-                    const isLengkapChecked = catCell.querySelector('[data-cat="lengkap"] .box-white, [data-cat="lengkap"] .box-dark')?.innerText.trim() === '✓';
-                    
-                    let isHighRisk = false;
-                    let isLowRisk = false;
+                    let isAnnual = false;
+                    let isPremedical = false;
+                    let isSemesterly = false;
                     catCell.querySelectorAll('.checkbox-container').forEach(c => {
                         const cTxt = c.innerText.toLowerCase();
                         const b = c.querySelector('.box-white, .box-dark, .box-light');
                         if (b && b.innerText.trim() === '✓') {
-                            if (cTxt.includes('tinggi') || cTxt.includes('high')) isHighRisk = true;
-                            if (cTxt.includes('rendah') || cTxt.includes('low')) isLowRisk = true;
+                            if (cTxt.includes('annual')) isAnnual = true;
+                            if (cTxt.includes('premedical')) isPremedical = true;
+                            if (cTxt.includes('semesterly')) isSemesterly = true;
                         }
                     });
 
-                    const isSiteChecked = !isLengkapChecked && (isHighRisk || isLowRisk || txt.includes('site exam') || txt.includes('pemeriksaan di site'));
-                    const chosenType = isSiteChecked ? 'site' : 'lengkap';
-                    const chosenRisk = isHighRisk ? 'high_risk' : 'low_risk';
+                    // Detect which category is checked
+                    let chosenCat = 'new_hire'; // default
+                    if (isAnnual) chosenCat = 'annual';
+                    else if (isPremedical) chosenCat = 'premedical';
+                    else if (isSemesterly) chosenCat = 'semesterly';
 
                     catCell.innerHTML = `
                         <table class="category-table" style="width: 100%; border-collapse: collapse;">
                             <tr>
-                                <td style="width: 45%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
-                                    <span class="checkbox-container ${chosenType === 'site' ? 'is-strikethrough' : ''}" data-cat="lengkap" style="${chosenType === 'site' ? 'text-decoration: line-through;' : ''}">
-                                        <span class="box-white" contenteditable="false">${chosenType === 'lengkap' ? '✓' : ''}</span>
-                                        <span class="opt-label" style="${chosenType === 'site' ? 'text-decoration: line-through;' : ''}">Lengkap/<span class="en-label" style="${chosenType === 'site' ? 'text-decoration: line-through;' : ''}">Full</span></span>
+                                <td style="width: 50%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
+                                    <span class="checkbox-container ${chosenCat !== 'new_hire' ? 'is-strikethrough' : ''}" data-cat="new_hire" style="${chosenCat !== 'new_hire' ? 'text-decoration: line-through;' : ''}">
+                                        <span class="box-white" contenteditable="false">${chosenCat === 'new_hire' ? '✓' : ''}</span>
+                                        <span class="opt-label" style="${chosenCat !== 'new_hire' ? 'text-decoration: line-through;' : ''}">New Hire</span>
                                     </span>
                                 </td>
-                                <td style="width: 55%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
-                                    <span class="checkbox-container ${chosenType === 'lengkap' ? 'is-strikethrough' : ''}" data-cat="site" style="${chosenType === 'lengkap' ? 'text-decoration: line-through;' : ''}">
-                                        <span class="box-white" contenteditable="false">${chosenType === 'site' ? '✓' : ''}</span>
-                                        <span class="opt-label" style="${chosenType === 'lengkap' ? 'text-decoration: line-through;' : ''}">Pemeriksaan di site/<span class="en-label" style="${chosenType === 'lengkap' ? 'text-decoration: line-through;' : ''}">Site Exam</span></span>
+                                <td style="width: 50%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
+                                    <span class="checkbox-container ${chosenCat !== 'annual' ? 'is-strikethrough' : ''}" data-cat="annual" style="${chosenCat !== 'annual' ? 'text-decoration: line-through;' : ''}">
+                                        <span class="box-white" contenteditable="false">${chosenCat === 'annual' ? '✓' : ''}</span>
+                                        <span class="opt-label" style="${chosenCat !== 'annual' ? 'text-decoration: line-through;' : ''}">Annual</span>
                                     </span>
                                 </td>
                             </tr>
                             <tr>
-                                <td style="width: 45%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
-                                    <span class="checkbox-container ${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'is-strikethrough' : ''}" data-cat="high_risk" style="${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'text-decoration: line-through;' : ''}">
-                                        <span class="box-white" contenteditable="false">${(chosenType === 'site' && chosenRisk === 'high_risk') ? '✓' : ''}</span>
-                                        <span class="opt-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'text-decoration: line-through;' : ''}">Resiko Tinggi/<span class="en-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'high_risk') ? 'text-decoration: line-through;' : ''}">High Risk*</span></span>
+                                <td style="width: 50%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
+                                    <span class="checkbox-container ${chosenCat !== 'premedical' ? 'is-strikethrough' : ''}" data-cat="premedical" style="${chosenCat !== 'premedical' ? 'text-decoration: line-through;' : ''}">
+                                        <span class="box-white" contenteditable="false">${chosenCat === 'premedical' ? '✓' : ''}</span>
+                                        <span class="opt-label" style="${chosenCat !== 'premedical' ? 'text-decoration: line-through;' : ''}">Premedical</span>
                                     </span>
                                 </td>
-                                <td style="width: 55%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
-                                    <span class="checkbox-container ${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'is-strikethrough' : ''}" data-cat="low_risk" style="${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'text-decoration: line-through;' : ''}">
-                                        <span class="box-white" contenteditable="false">${(chosenType === 'site' && chosenRisk === 'low_risk') ? '✓' : ''}</span>
-                                        <span class="opt-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'text-decoration: line-through;' : ''}">Resiko Rendah/<span class="en-label" style="${(chosenType === 'lengkap' || chosenRisk !== 'low_risk') ? 'text-decoration: line-through;' : ''}">Low Risk</span></span>
+                                <td style="width: 50%; vertical-align: top; padding: 2px 0; white-space: nowrap;">
+                                    <span class="checkbox-container ${chosenCat !== 'semesterly' ? 'is-strikethrough' : ''}" data-cat="semesterly" style="${chosenCat !== 'semesterly' ? 'text-decoration: line-through;' : ''}">
+                                        <span class="box-white" contenteditable="false">${chosenCat === 'semesterly' ? '✓' : ''}</span>
+                                        <span class="opt-label" style="${chosenCat !== 'semesterly' ? 'text-decoration: line-through;' : ''}">Semesterly</span>
                                     </span>
                                 </td>
                             </tr>
@@ -859,83 +861,49 @@
 
         // Helper: Cari elemen Kategori dalam paper
         function findCategoryElements(paper) {
-            let itemLengkap = paper.querySelector('[data-cat="lengkap"]');
-            let itemSite = paper.querySelector('[data-cat="site"]');
-            let itemHighRisk = paper.querySelector('[data-cat="high_risk"]');
-            let itemLowRisk = paper.querySelector('[data-cat="low_risk"]');
+            let itemNewHire = paper.querySelector('[data-cat="new_hire"]');
+            let itemAnnual = paper.querySelector('[data-cat="annual"]');
+            let itemPremedical = paper.querySelector('[data-cat="premedical"]');
+            let itemSemesterly = paper.querySelector('[data-cat="semesterly"]');
 
-            if (!itemLengkap || !itemSite || !itemHighRisk || !itemLowRisk) {
+            if (!itemNewHire || !itemAnnual || !itemPremedical || !itemSemesterly) {
                 paper.querySelectorAll('.checkbox-container').forEach(c => {
                     const txt = c.innerText.toLowerCase();
-                    if (!itemLengkap && (txt.includes('lengkap') || txt.includes('full'))) {
-                        itemLengkap = c;
-                        c.setAttribute('data-cat', 'lengkap');
-                    } else if (!itemSite && (txt.includes('site') || txt.includes('pemeriksaan di site'))) {
-                        itemSite = c;
-                        c.setAttribute('data-cat', 'site');
-                    } else if (!itemHighRisk && (txt.includes('tinggi') || txt.includes('high'))) {
-                        itemHighRisk = c;
-                        c.setAttribute('data-cat', 'high_risk');
-                    } else if (!itemLowRisk && (txt.includes('rendah') || txt.includes('low'))) {
-                        itemLowRisk = c;
-                        c.setAttribute('data-cat', 'low_risk');
+                    if (!itemNewHire && txt.includes('new hire')) {
+                        itemNewHire = c;
+                        c.setAttribute('data-cat', 'new_hire');
+                    } else if (!itemAnnual && txt.includes('annual')) {
+                        itemAnnual = c;
+                        c.setAttribute('data-cat', 'annual');
+                    } else if (!itemPremedical && txt.includes('premedical')) {
+                        itemPremedical = c;
+                        c.setAttribute('data-cat', 'premedical');
+                    } else if (!itemSemesterly && txt.includes('semesterly')) {
+                        itemSemesterly = c;
+                        c.setAttribute('data-cat', 'semesterly');
                     }
                 });
             }
 
-            return { itemLengkap, itemSite, itemHighRisk, itemLowRisk };
+            return { itemNewHire, itemAnnual, itemPremedical, itemSemesterly };
         }
 
         // Handler Khusus Kategori: Logika Coret & Centang Otomatis
         function handleCategoryClick(catType, paper) {
-            const { itemLengkap, itemSite, itemHighRisk, itemLowRisk } = findCategoryElements(paper);
+            const { itemNewHire, itemAnnual, itemPremedical, itemSemesterly } = findCategoryElements(paper);
+            const allItems = [itemNewHire, itemAnnual, itemPremedical, itemSemesterly];
+            const catMap = {
+                'new_hire': itemNewHire,
+                'annual': itemAnnual,
+                'premedical': itemPremedical,
+                'semesterly': itemSemesterly,
+            };
 
-            if (catType === 'lengkap') {
-                // Ketika memilih Lengkap/Full:
-                // Lengkap dicentang (tidak dicoret)
-                setCategoryItemState(itemLengkap, true, false);
-                // Pemeriksaan di Site dicoret dan tidak dicentang
-                setCategoryItemState(itemSite, false, true);
-                // Resiko Tinggi dan Resiko Rendah dicoret dan tidak dicentang
-                setCategoryItemState(itemHighRisk, false, true);
-                setCategoryItemState(itemLowRisk, false, true);
-            } else if (catType === 'site') {
-                // Ketika memilih Pemeriksaan di site:
-                // Coret Lengkap/Full (tidak dicentang)
-                setCategoryItemState(itemLengkap, false, true);
-                // Centang Pemeriksaan di site (tidak dicoret)
-                setCategoryItemState(itemSite, true, false);
-                
-                // Harus memilih Resiko Tinggi atau Rendah:
-                // Jika Resiko Tinggi sudah aktif sebelumnya, pertahankan Resiko Tinggi & coret Resiko Rendah;
-                // Jika tidak, default centang Resiko Rendah dan coret Resiko Tinggi
-                const isHighRisk = itemHighRisk && itemHighRisk.querySelector('.box-white')?.innerText.trim() === '✓';
-                if (isHighRisk) {
-                    setCategoryItemState(itemHighRisk, true, false);
-                    setCategoryItemState(itemLowRisk, false, true);
-                } else {
-                    setCategoryItemState(itemLowRisk, true, false);
-                    setCategoryItemState(itemHighRisk, false, true);
-                }
-            } else if (catType === 'high_risk') {
-                // Ketika memilih Resiko Tinggi:
-                // Otomatis aktifkan Pemeriksaan di Site & coret Lengkap
-                setCategoryItemState(itemLengkap, false, true);
-                setCategoryItemState(itemSite, true, false);
-                // Centang Resiko Tinggi (tidak dicoret)
-                setCategoryItemState(itemHighRisk, true, false);
-                // Coret Resiko Rendah (tidak dicentang)
-                setCategoryItemState(itemLowRisk, false, true);
-            } else if (catType === 'low_risk') {
-                // Ketika memilih Resiko Rendah:
-                // Otomatis aktifkan Pemeriksaan di Site & coret Lengkap
-                setCategoryItemState(itemLengkap, false, true);
-                setCategoryItemState(itemSite, true, false);
-                // Centang Resiko Rendah (tidak dicoret)
-                setCategoryItemState(itemLowRisk, true, false);
-                // Coret Resiko Tinggi (tidak dicentang)
-                setCategoryItemState(itemHighRisk, false, true);
-            }
+            // Centang item yang dipilih, coret sisanya
+            allItems.forEach(item => {
+                const isSelected = Object.entries(catMap).find(([k, v]) => v === item)?.[0] === catType;
+                setCategoryItemState(item, isSelected, !isSelected);
+            });
 
             markDirty();
         }
@@ -949,16 +917,16 @@
 
             const paper = document.getElementById('letterPaper');
 
-            // 1. Cek apakah yang diklik adalah bagian Kategori (Lengkap, Site Exam, Resiko Tinggi, Resiko Rendah)
+            // 1. Cek apakah yang diklik adalah bagian Kategori (New Hire, Annual, Premedical, Semesterly)
             let catContainer = target.closest('[data-cat]');
             if (!catContainer) {
                 const testC = target.closest('.checkbox-container');
                 if (testC) {
                     const txt = testC.innerText.toLowerCase();
-                    if (txt.includes('lengkap') || txt.includes('full')) catContainer = testC, testC.setAttribute('data-cat', 'lengkap');
-                    else if (txt.includes('site')) catContainer = testC, testC.setAttribute('data-cat', 'site');
-                    else if (txt.includes('tinggi') || txt.includes('high')) catContainer = testC, testC.setAttribute('data-cat', 'high_risk');
-                    else if (txt.includes('rendah') || txt.includes('low')) catContainer = testC, testC.setAttribute('data-cat', 'low_risk');
+                    if (txt.includes('new hire')) catContainer = testC, testC.setAttribute('data-cat', 'new_hire');
+                    else if (txt.includes('annual')) catContainer = testC, testC.setAttribute('data-cat', 'annual');
+                    else if (txt.includes('premedical')) catContainer = testC, testC.setAttribute('data-cat', 'premedical');
+                    else if (txt.includes('semesterly')) catContainer = testC, testC.setAttribute('data-cat', 'semesterly');
                 }
             }
 

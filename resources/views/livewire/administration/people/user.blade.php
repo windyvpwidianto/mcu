@@ -31,6 +31,7 @@
                             <th>Department / Perusahaan</th>
                             <th>Employee ID</th>
                             <th>Email</th>
+                            <th>Nomor HP</th>
                             <th>Action</th>
                         </tr>
                     </thead>
@@ -46,6 +47,7 @@
                             <td>{{ $user->department_name ?? $user->company_name ?? '-' }}</td>
                             <td>{{ $user->employee_id }}</td>
                             <td>{{ $user->email }}</td>
+                            <td>{{ $user->phone_number ?? '-' }}</td>
                             <td class="flex gap-2">
                                 <!-- Edit -->
                                 <x-button.btn-tooltip color="warning" icon="edit" href="{{ route('people.details', $user->id) }}" tooltip="Details" />

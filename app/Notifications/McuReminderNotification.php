@@ -3,7 +3,7 @@
 namespace App\Notifications;
 
 use App\Channels\WhatsAppChannel;
-use App\Models\McuMasterData;
+use App\Models\McuRecord;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Notification;
@@ -16,7 +16,7 @@ class McuReminderNotification extends Notification implements ShouldQueue
     public ?array $channels;
 
     public function __construct(
-        public McuMasterData $participant,
+        public McuRecord $participant,
         public string $type, 
         ?array $channels = null
     ) {
@@ -36,14 +36,14 @@ class McuReminderNotification extends Notification implements ShouldQueue
     public function toWhatsApp(object $notifiable): array
     {
         $date = $this->participant->mcu_date ? Carbon::parse($this->participant->mcu_date)->format('d M Y') : '-';
-        $employeeName = $this->participant->employee_name ?? 'Karyawan';
+        $employeeName = $this->participant->employee->name ?? 'Karyawan';
 
         $phone = method_exists($notifiable, 'routeNotificationFor') 
             ? $notifiable->routeNotificationFor('whatsapp') 
             : null;
 
         if (!$phone) {
-            $phone = $this->participant->hp_number;
+            $phone = $this->participant->employee->phone_number ?? '';
         }
 
         $text  = "*PEMBERITAHUAN JADWAL MCU TAHUNAN*\n\n";

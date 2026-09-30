@@ -14,7 +14,7 @@ use Livewire\Component;
 class Details extends Component
 {
     public $userId, $name_user;
-    public $name, $gender, $date_birth, $username, $dep_cont, $employee_id, $date_commenced, $email, $role_id;
+    public $name, $gender, $date_birth, $username, $dep_cont, $employee_id, $date_commenced, $email, $role_id, $phone_number;
     public $showModal = false;
     public $showDeleteModal = false;
     public $showImportModal = false; // 🔹 untuk modal import
@@ -53,6 +53,7 @@ class Details extends Component
             'gender' => 'nullable|in:L,P',
             'date_birth' => 'nullable|date',
             'role_id' => 'nullable',
+            'phone_number' => 'nullable|string|max:20',
             'dep_cont' => 'nullable|string|max:255',
             'date_commenced' => 'nullable|date',
 
@@ -208,6 +209,7 @@ class Details extends Component
             'department_name' => $this->dep_cont, // atau nama kolom yang sesuai
             'pilih_divisi' => $this->deptCont,
             'employee_id' => $this->employee_id,
+            'phone_number' => $this->phone_number,
             'date_commenced' => $this->date_commenced,
             'email' => $this->email,
         ];

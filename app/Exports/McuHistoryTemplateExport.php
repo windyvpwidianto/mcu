@@ -14,20 +14,47 @@ class McuHistoryTemplateExport implements FromArray, WithHeadings, ShouldAutoSiz
     {
         return [
             [
-                'EMP001',           // employee_id
-                'John Doe',         // full_name
-                '2023-03-15',       // 2023
-                '2024-04-20',       // 2024
-                '2025-05-10',       // 2025
-                '',                 // 2026
+                '3201234567890001', // NIK
+                'EMP001',           // Employee ID
+                'John Doe',         // Nama Lengkap
+                'L',                // Jenis Kelamin
+                '1990-01-15',       // Tanggal Lahir
+                '081234567890',     // Nomor Hp
+                
+                // Riwayat 2023
+                '2023-05-20',       // 2023_Tanggal
+                'Hadir',            // 2023_Kehadiran
+                'Selesai',          // 2023_Status
+                'Fit to Work',      // 2023_Medis
+                
+                // Riwayat 2024
+                '2024-05-22',       // 2024_Tanggal
+                'Hadir',            // 2024_Kehadiran
+                'Selesai',          // 2024_Status
+                'Fit with Notes',   // 2024_Medis
+
+                // Riwayat 2025
+                '', '', '', ''      // Kosong untuk 2025
             ],
             [
-                'EMP002',
-                'Jane Smith',
-                '2023-02-28',
-                '2024-03-01',
-                '',
-                '2026-01-15',
+                '3201234567890002', 
+                'EMP002',           
+                'Jane Smith',       
+                'P',                
+                '1992-08-30',       
+                '081298765432',     
+                
+                // Riwayat 2023 (Kosong)
+                '', '', '', '',
+
+                // Riwayat 2024 (Kosong)
+                '', '', '', '',
+
+                // Riwayat 2025
+                '2025-06-10',       
+                'Tidak Hadir',      
+                'Batal',            
+                '',                 
             ],
         ];
     }
@@ -35,12 +62,27 @@ class McuHistoryTemplateExport implements FromArray, WithHeadings, ShouldAutoSiz
     public function headings(): array
     {
         return [
-            'employee_id',
-            'full_name',
-            '2023',
-            '2024',
-            '2025',
-            '2026',
+            'NIK',
+            'Employee ID',
+            'Nama Lengkap',
+            'Jenis Kelamin (L/P)',
+            'Tanggal Lahir (YYYY-MM-DD)',
+            'Nomor Hp',
+
+            '2023_Tanggal',
+            '2023_Kehadiran',
+            '2023_Status',
+            '2023_Medis',
+
+            '2024_Tanggal',
+            '2024_Kehadiran',
+            '2024_Status',
+            '2024_Medis',
+
+            '2025_Tanggal',
+            '2025_Kehadiran',
+            '2025_Status',
+            '2025_Medis',
         ];
     }
 

@@ -694,7 +694,6 @@ class GenerateSchedule extends Component
             'historyExcelFile.max'      => 'Ukuran file maksimal 10MB.',
         ]);
 
-        // Extend execution time for large files
         set_time_limit(600);
         ini_set('memory_limit', '512M');
 
@@ -707,217 +706,209 @@ class GenerateSchedule extends Component
         $this->importHistoryErrors = [];
 
         try {
-            // Raw import — NO WithHeadingRow so year columns (2023, 2024...) are not mangled
             $collections = Excel::toCollection(new McuHistoryImport, $this->historyExcelFile);
 
             if ($collections->isEmpty() || $collections->first()->isEmpty()) {
-                $this->importHistoryErrors[] = [
-                    'row'    => '-',
-                    'emp_id' => '-',
-                    'reason' => 'File Excel kosong atau format tidak sesuai.',
-                ];
+                $this->importHistoryErrors[] = ['row' => '-', 'emp_id' => '-', 'reason' => 'File Excel kosong atau format tidak sesuai.'];
                 return;
             }
 
             $allRows = $collections->first();
 
             if ($allRows->count() < 2) {
-                $this->importHistoryErrors[] = [
-                    'row'    => '-',
-                    'emp_id' => '-',
-                    'reason' => 'File hanya memiliki baris header, tidak ada data.',
-                ];
+                $this->importHistoryErrors[] = ['row' => '-', 'emp_id' => '-', 'reason' => 'File hanya memiliki baris header, tidak ada data.'];
                 return;
             }
 
-            // First row is the header
-            $headerRow  = $allRows->first()->values();
-            $dataRows   = $allRows->slice(1); // skip header row
+            $headerRow = $allRows->first()->values();
+            $dataRows  = $allRows->slice(1);
 
-            // Build column index map from header
-            // Expected: employee_id, full_name, 2023, 2024, 2025, 2026, ...
+            // ── Personal column map (skip year-group columns like "2023_Tanggal") ──
             $colMap = [];
-            foreach ($headerRow as $colIndex => $colName) {
-                $colMap[strtolower(trim((string)$colName))] = $colIndex;
+            foreach ($headerRow as $i => $col) {
+                $raw  = trim((string)$col);
+                $name = strtolower($raw);
+                if (preg_match('/^20\d{2}_/i', $raw)) continue; // skip year-group cols
+                if (str_contains($name, 'nik'))                                               $colMap['nik']         = $i;
+                if (str_contains($name, 'employee id') || str_contains($name, 'employee_id')) $colMap['employee_id'] = $i;
+                if (str_contains($name, 'nama lengkap') || str_contains($name, 'full_name'))  $colMap['full_name']   = $i;
+                if (str_contains($name, 'jenis kelamin'))                                      $colMap['gender']      = $i;
+                if (str_contains($name, 'tanggal lahir'))                                      $colMap['dob']         = $i;
+                if (str_contains($name, 'nomor hp'))                                           $colMap['phone']       = $i;
             }
 
-            // Detect year columns from header
-            $yearColumns = [];
-            foreach ($headerRow as $colIndex => $colName) {
-                $name = trim((string)$colName);
-                if (is_numeric($name) && (int)$name >= 2000 && (int)$name <= 2100) {
-                    $yearColumns[(int)$name] = $colIndex;
+            // ── Year-group column map: 2023_Tanggal → yearGroups[2023]['tanggal'] = colIndex ──
+            $yearGroups = [];
+            foreach ($headerRow as $i => $col) {
+                if (preg_match('/^(20\d{2})_(.+)$/i', trim((string)$col), $m)) {
+                    $yr  = (int)$m[1];
+                    $key = strtolower(trim($m[2]));
+                    $yearGroups[$yr] ??= ['tanggal' => null, 'kehadiran' => null, 'status' => null, 'medis' => null];
+                    if (str_contains($key, 'tanggal'))      $yearGroups[$yr]['tanggal']   = $i;
+                    elseif (str_contains($key, 'kehadiran')) $yearGroups[$yr]['kehadiran'] = $i;
+                    elseif (str_contains($key, 'status'))    $yearGroups[$yr]['status']    = $i;
+                    elseif (str_contains($key, 'medis'))     $yearGroups[$yr]['medis']     = $i;
                 }
             }
 
-            if (empty($yearColumns)) {
-                $yearColumns = array_flip($this->historyYears); // fallback
-            }
+            // ── Value mappers ──
+            $mapAtt = function($v) {
+                $l = strtolower(trim($v ?? ''));
+                if ($l === 'hadir' || $l === 'present')       return 'present';
+                if ($l === 'tidak hadir' || $l === 'no show') return 'no_show';
+                if ($l === 'reschedule')                        return 'rescheduled';
+                return 'scheduled';
+            };
+            $mapProc = function($v) {
+                $l = strtolower(trim($v ?? ''));
+                if ($l === 'selesai' || $l === 'completed')   return 'completed';
+                if ($l === 'batal'   || $l === 'cancelled')   return 'cancelled';
+                if (str_contains($l, 'review'))                return 'waiting_review';
+                return 'scheduled';
+            };
+            $mapMed = function($v) {
+                $l = strtolower(trim($v ?? ''));
+                if (str_contains($l, 'fit with notes'))        return 'fit_with_notes';
+                if (str_contains($l, 'fit to work'))           return 'fit_to_work';
+                if (str_contains($l, 'temporary unfit'))       return 'temporary_unfit';
+                if (str_contains($l, 'unfit'))                 return 'unfit';
+                return null;
+            };
 
-            // Pre-load all users into memory cache for speed
-            $userCache = User::select('id', 'employee_id', 'name')
-                ->get()
-                ->keyBy('employee_id');
+            // ── Pre-load users into memory ──
+            $userCache = User::select('id', 'employee_id', 'name', 'nik', 'gender', 'date_birth', 'phone_number')
+                ->get()->keyBy('employee_id');
 
             DB::beginTransaction();
 
             foreach ($dataRows as $index => $rawRow) {
-                $row    = $rawRow->values(); // convert to 0-indexed
+                $row    = $rawRow->values();
                 $rowNum = $index + 2;
 
-                $empIdCol   = $colMap['employee_id'] ?? 0;
-                $fullNameCol = $colMap['full_name'] ?? 1;
+                $empIdCol  = $colMap['employee_id'] ?? null;
+                $nikCol    = $colMap['nik']         ?? null;
+                $nameCol   = $colMap['full_name']   ?? null;
+                $genderCol = $colMap['gender']      ?? null;
+                $dobCol    = $colMap['dob']         ?? null;
+                $phoneCol  = $colMap['phone']       ?? null;
 
-                $employeeId = isset($row[$empIdCol]) ? trim((string)$row[$empIdCol]) : null;
-                $fullName   = isset($row[$fullNameCol]) ? trim((string)$row[$fullNameCol]) : null;
+                $employeeId = $empIdCol !== null && isset($row[$empIdCol]) ? trim((string)$row[$empIdCol]) : null;
 
                 if (!$employeeId) {
-                    $this->importHistoryErrors[] = [
-                        'row'    => $rowNum,
-                        'emp_id' => '-',
-                        'reason' => 'employee_id kosong.',
-                    ];
+                    $this->importHistoryErrors[] = ['row' => $rowNum, 'emp_id' => '-', 'reason' => 'Employee ID kosong.'];
                     continue;
                 }
 
-                // Look up user from in-memory cache
-                $user = $userCache->get($employeeId);
+                $nik      = $nikCol    !== null && isset($row[$nikCol])    ? trim((string)$row[$nikCol])    : null;
+                $fullName = $nameCol   !== null && isset($row[$nameCol])   ? trim((string)$row[$nameCol])   : null;
+                $gender   = $genderCol !== null && isset($row[$genderCol]) ? trim((string)$row[$genderCol]) : null;
+                $rawDob   = $dobCol    !== null && isset($row[$dobCol])    ? trim((string)$row[$dobCol])    : null;
+                $phone    = $phoneCol  !== null && isset($row[$phoneCol])  ? trim((string)$row[$phoneCol])  : null;
 
+                $dob = null;
+                if ($rawDob) {
+                    try {
+                        $dob = is_numeric($rawDob)
+                            ? \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$rawDob)->format('Y-m-d')
+                            : date('Y-m-d', strtotime($rawDob));
+                    } catch (\Exception $e) {}
+                }
+
+                // Upsert user
+                $user = $userCache->get($employeeId);
                 if (!$user) {
-                    if ($fullName) {
-                        $user = User::create([
-                            'employee_id'  => $employeeId,
-                            'username'     => $employeeId,
-                            'name'         => $fullName,
-                            'password'     => Hash::make('password'),
-                            'pilih_divisi' => 'department',
-                        ]);
-                        $userCache->put($employeeId, $user);
-                    } else {
-                        $this->importHistoryErrors[] = [
-                            'row'    => $rowNum,
-                            'emp_id' => $employeeId,
-                            'reason' => "Employee ID '$employeeId' tidak ditemukan di database.",
-                        ];
+                    if (!$fullName) {
+                        $this->importHistoryErrors[] = ['row' => $rowNum, 'emp_id' => $employeeId, 'reason' => "Employee ID '$employeeId' tidak ditemukan dan Nama Lengkap kosong."];
                         $this->importHistoryResults['user_not_found']++;
                         continue;
                     }
-                }
-
-                // Update name if different
-                if ($fullName && $user->name !== $fullName) {
-                    $user->update(['name' => $fullName]);
+                    $user = User::create([
+                        'employee_id'  => $employeeId,
+                        'username'     => $employeeId,
+                        'name'         => $fullName,
+                        'nik'          => $nik,
+                        'gender'       => $gender,
+                        'date_birth'   => $dob,
+                        'phone_number' => $phone,
+                        'password'     => Hash::make('password'),
+                        'pilih_divisi' => 'department',
+                    ]);
+                    $userCache->put($employeeId, $user);
+                } else {
+                    $upd = [];
+                    if ($fullName && $user->name      !== $fullName) $upd['name']       = $fullName;
+                    if ($nik      && $user->nik        !== $nik)      $upd['nik']        = $nik;
+                    if ($gender   && $user->gender     !== $gender)   $upd['gender']     = $gender;
+                    if ($dob      && $user->date_birth !== $dob)      $upd['date_birth'] = $dob;
+                    if ($phone) {
+                        if (isset($user->phone_number) && $user->phone_number !== $phone) $upd['phone_number'] = $phone;
+                        elseif (isset($user->no_hp) && $user->no_hp !== $phone)           $upd['no_hp']        = $phone;
+                        elseif (isset($user->phone) && $user->phone !== $phone)           $upd['phone']        = $phone;
+                    }
+                    if (!empty($upd)) $user->update($upd);
                 }
 
                 $this->importHistoryResults['processed']++;
 
-                foreach ($yearColumns as $year => $colIndex) {
-                    $rawDate = isset($row[$colIndex]) ? $row[$colIndex] : null;
+                // ── Process each year group (columns: YYYY_Tanggal, YYYY_Kehadiran, YYYY_Status, YYYY_Medis) ──
+                foreach ($yearGroups as $year => $cols) {
+                    $rawDate = $cols['tanggal']   !== null && isset($row[$cols['tanggal']])   ? trim((string)$row[$cols['tanggal']])   : '';
+                    $rawAtt  = $cols['kehadiran']  !== null && isset($row[$cols['kehadiran']]) ? trim((string)$row[$cols['kehadiran']]) : '';
+                    $rawProc = $cols['status']     !== null && isset($row[$cols['status']])    ? trim((string)$row[$cols['status']])    : '';
+                    $rawMed  = $cols['medis']      !== null && isset($row[$cols['medis']])     ? trim((string)$row[$cols['medis']])     : '';
 
-                    // Skip empty
-                    if ($rawDate === null || $rawDate === '') {
-                        continue;
-                    }
+                    if ($rawDate === '' && $rawAtt === '' && $rawProc === '' && $rawMed === '') continue;
 
-                    // Parse date — use PhpSpreadsheet for Excel serial numbers (fast)
                     $mcuDate = null;
-                    try {
-                        $rawDate = trim((string)$rawDate);
-                        if (is_numeric($rawDate)) {
-                            // Excel serial date → PHP DateTime via PhpSpreadsheet
-                            $dateObj = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$rawDate);
-                            $mcuDate = $dateObj->format('Y-m-d');
-                        } else {
-                            // String date — try common formats
-                            $mcuDate = date('Y-m-d', strtotime($rawDate));
-                            if (!$mcuDate || $mcuDate === '1970-01-01') {
-                                throw new \Exception("Cannot parse date: $rawDate");
+                    if ($rawDate !== '') {
+                        try {
+                            if (is_numeric($rawDate)) {
+                                $mcuDate = \PhpOffice\PhpSpreadsheet\Shared\Date::excelToDateTimeObject((float)$rawDate)->format('Y-m-d');
+                            } else {
+                                $p = date('Y-m-d', strtotime($rawDate));
+                                if ($p && $p !== '1970-01-01') $mcuDate = $p;
                             }
-                        }
-                    } catch (\Exception $ex) {
-                        $this->importHistoryErrors[] = [
-                            'row'    => $rowNum,
-                            'emp_id' => $employeeId,
-                            'reason' => "Tahun $year: Format tanggal '$rawDate' tidak valid.",
-                        ];
-                        $this->importHistoryResults['skipped']++;
-                        continue;
+                        } catch (\Exception $e) {}
                     }
 
-                    // Check if record already exists for this year
-                    $existing = McuRecord::where('employee_id', $user->id)
-                        ->where('mcu_year', $year)
-                        ->first();
+                    $attStatus  = $mapAtt($rawAtt);
+                    $procStatus = $mapProc($rawProc);
+                    $medStatus  = $mapMed($rawMed);
 
-                    $isFutureOrToday = false;
-                    if ((int)$year == 2026) {
-                        $today = Carbon::today('Asia/Jakarta');
-                        $mcuDateCarbon = Carbon::parse($mcuDate)->startOfDay();
-                        if ($mcuDateCarbon->greaterThanOrEqualTo($today)) {
-                            $isFutureOrToday = true;
-                        }
-                    }
+                    $existing = McuRecord::where('employee_id', $user->id)->where('mcu_year', $year)->first();
 
                     if ($existing) {
-                        if ($isFutureOrToday) {
-                            $existing->update([
-                                'mcu_date'            => $mcuDate,
-                                'attendance_status'   => 'scheduled',
-                                'process_status'      => 'scheduled',
-                                'notification_status' => 'pending',
-                            ]);
-                            // hapus result jika ada agar bisa di-proses no-show nanti malam
-                            McuResult::where('mcu_record_id', $existing->id)->delete();
-                        } else {
-                            $existing->update([
-                                'mcu_date'            => $mcuDate,
-                                'attendance_status'   => 'present',
-                                'process_status'      => 'completed',
-                                'notification_status' => 'notified',
-                            ]);
-    
+                        $existing->update([
+                            'mcu_date'            => $mcuDate ?: $existing->mcu_date,
+                            'attendance_status'   => $attStatus,
+                            'process_status'      => $procStatus,
+                            'notification_status' => 'notified',
+                        ]);
+                        if ($medStatus) {
                             McuResult::updateOrCreate(
                                 ['mcu_record_id' => $existing->id],
-                                [
-                                    'status'          => 'fit_to_work',
-                                    'workflow_status' => 'reviewed',
-                                    'is_published'    => true,
-                                ]
+                                ['status' => $medStatus, 'workflow_status' => 'reviewed', 'is_published' => true]
                             );
                         }
-
                         $this->importHistoryResults['skipped']++;
                     } else {
-                        if ($isFutureOrToday) {
-                            $newRecord = McuRecord::create([
-                                'mcu_schedule_id'     => null,
-                                'employee_id'         => $user->id,
-                                'mcu_year'            => $year,
-                                'mcu_date'            => $mcuDate,
-                                'attendance_status'   => 'scheduled',
-                                'process_status'      => 'scheduled',
-                                'notification_status' => 'pending',
-                            ]);
-                            // tidak ada result yang di-create
-                        } else {
-                            $newRecord = McuRecord::create([
-                                'mcu_schedule_id'     => null,
-                                'employee_id'         => $user->id,
-                                'mcu_year'            => $year,
-                                'mcu_date'            => $mcuDate,
-                                'attendance_status'   => 'present',
-                                'process_status'      => 'completed',
-                                'notification_status' => 'notified',
-                            ]);
-    
+                        $rec = McuRecord::create([
+                            'mcu_schedule_id'     => null,
+                            'employee_id'         => $user->id,
+                            'mcu_year'            => $year,
+                            'mcu_date'            => $mcuDate,
+                            'attendance_status'   => $attStatus,
+                            'process_status'      => $procStatus,
+                            'notification_status' => 'notified',
+                        ]);
+                        if ($medStatus) {
                             McuResult::create([
-                                'mcu_record_id'   => $newRecord->id,
-                                'status'          => 'fit_to_work',
+                                'mcu_record_id'   => $rec->id,
+                                'status'          => $medStatus,
                                 'workflow_status' => 'reviewed',
                                 'is_published'    => true,
                             ]);
                         }
-
                         $this->importHistoryResults['success']++;
                     }
                 }
@@ -935,11 +926,7 @@ class GenerateSchedule extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('MCU History Import Error: ' . $e->getMessage() . ' | ' . $e->getFile() . ':' . $e->getLine());
-            $this->importHistoryErrors[] = [
-                'row'    => '-',
-                'emp_id' => '-',
-                'reason' => 'Kesalahan sistem: ' . $e->getMessage(),
-            ];
+            $this->importHistoryErrors[] = ['row' => '-', 'emp_id' => '-', 'reason' => 'Kesalahan sistem: ' . $e->getMessage()];
         }
     }
 

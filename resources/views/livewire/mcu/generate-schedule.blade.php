@@ -636,8 +636,8 @@
                         </svg>
                         <div>
                             <p><strong>Format Excel yang diperlukan:</strong></p>
-                            <p>Header kolom: <code class="bg-blue-100 px-1 rounded">employee_id</code>, <code class="bg-blue-100 px-1 rounded">full_name</code>, <code class="bg-blue-100 px-1 rounded">2023</code>, <code class="bg-blue-100 px-1 rounded">2024</code>, <code class="bg-blue-100 px-1 rounded">2025</code>, <code class="bg-blue-100 px-1 rounded">2026</code></p>
-                            <p class="mt-1">Isi kolom tahun dengan <strong>tanggal MCU</strong> (format: YYYY-MM-DD atau DD/MM/YYYY). Kosongkan jika tidak ada MCU di tahun tersebut.</p>
+                            <p>Kolom Wajib: <code class="bg-blue-100 px-1 rounded">Employee ID</code>, <code class="bg-blue-100 px-1 rounded">Tahun MCU</code>.</p>
+                            <p class="mt-1">Untuk karyawan yang sama dengan beberapa tahun MCU, buat baris baru untuk tiap tahunnya (1 Baris = 1 Riwayat Tahun MCU).</p>
                         </div>
                     </div>
 

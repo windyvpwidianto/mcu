@@ -11,7 +11,7 @@ use Carbon\Carbon;
 class ProcessMcuReminders extends Command
 {
     protected $signature = 'mcu:process-reminders';
-    protected $description = 'Proses notifikasi H-2 bulan, H-1 bulan, H-1 minggu untuk MCU tahunan';
+    protected $description = 'Proses notifikasi H-1 bulan, H-1 minggu, H-3 hari untuk MCU tahunan';
 
     public function handle()
     {
@@ -21,24 +21,24 @@ class ProcessMcuReminders extends Command
 
         // 2. Peta eskalasi aturan reminder
         $reminders = [
-            'h-2_bulan' => [
-                'type' => 'h-2_bulan', 
-                'statuses' => ['pending'], 
-                'max_days' => 60, 
-                'min_days' => 31,
-                'next' => 'reminder_1'
-            ],
             'h-1_bulan' => [
                 'type' => 'h-1_bulan', 
-                'statuses' => ['pending', 'reminder_1'], 
+                'statuses' => ['pending'], 
                 'max_days' => 30, 
                 'min_days' => 8,
-                'next' => 'reminder_2'
+                'next' => 'reminder_1'
             ],
             'h-1_minggu' => [
                 'type' => 'h-1_minggu', 
-                'statuses' => ['pending', 'reminder_1', 'reminder_2'], 
+                'statuses' => ['pending', 'reminder_1'], 
                 'max_days' => 7, 
+                'min_days' => 4,
+                'next' => 'reminder_2'
+            ],
+            'h-3_hari' => [
+                'type' => 'h-3_hari', 
+                'statuses' => ['pending', 'reminder_1', 'reminder_2'], 
+                'max_days' => 3, 
                 'min_days' => 1,
                 'next' => 'final_reminder'
             ],

@@ -141,7 +141,8 @@ class DoctorReview extends Component
             $employeeUser = $result->record?->employee;
             $deptHeadUser = $result->record?->deptHead;
 
-            if ($employeeUser) {
+            // HANYA kirim notifikasi ke karyawan jika ia adalah karyawan internal MSM/TTN
+            if ($employeeUser && $employeeUser->pilih_divisi === 'department') {
                 // Notifikasi WhatsApp dan Database dikirim langsung (tanpa antrean/defer)
                 $employeeUser->notifyNow(new McuResultNotification($result, 'employee', [\App\Channels\WhatsAppChannel::class, 'database']));
                 // Notifikasi Email dikirim ke antrean (defer/queue)
@@ -150,16 +151,16 @@ class DoctorReview extends Component
                 } catch (\Exception $e) {
                     \Illuminate\Support\Facades\Log::error('MCU Result Email Error (Employee): ' . $e->getMessage());
                 }
-            }
 
-            if ($deptHeadUser) {
-                // Notifikasi WhatsApp dan Database dikirim langsung
-                $deptHeadUser->notifyNow(new McuResultNotification($result, 'dept_head', [\App\Channels\WhatsAppChannel::class, 'database']));
-                // Notifikasi Email dikirim ke antrean (defer/queue)
-                try {
-                    $deptHeadUser->notify(new McuResultNotification($result, 'dept_head', ['mail']));
-                } catch (\Exception $e) {
-                    \Illuminate\Support\Facades\Log::error('MCU Result Email Error (Dept Head): ' . $e->getMessage());
+                if ($deptHeadUser) {
+                    // Notifikasi WhatsApp dan Database dikirim langsung
+                    $deptHeadUser->notifyNow(new McuResultNotification($result, 'dept_head', [\App\Channels\WhatsAppChannel::class, 'database']));
+                    // Notifikasi Email dikirim ke antrean (defer/queue)
+                    try {
+                        $deptHeadUser->notify(new McuResultNotification($result, 'dept_head', ['mail']));
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('MCU Result Email Error (Dept Head): ' . $e->getMessage());
+                    }
                 }
             }
 

@@ -7,6 +7,8 @@ use Livewire\WithPagination;
 use App\Models\User;
 use App\Models\Department;
 use App\Models\Contractor;
+use App\Models\McuNotificationLog;
+use App\Services\FonnteService;
 use Carbon\Carbon;
 
 class McuUpcoming extends Component
@@ -26,6 +28,51 @@ class McuUpcoming extends Component
     public function updatingFilterPeriod()
     {
         $this->resetPage();
+    }
+
+    public function sendExpiredNotification($userId, FonnteService $fonnteService)
+    {
+        $user = User::find($userId);
+        if (!$user) {
+            session()->flash('error', 'Karyawan tidak ditemukan.');
+            return;
+        }
+
+        $phone = $user->phone_number ?? $user->whatsapp_number;
+        if (!$phone) {
+            session()->flash('error', "Nomor WhatsApp/telepon untuk {$user->name} tidak ditemukan.");
+            return;
+        }
+
+        $formattedDate = $user->next_mcu_date ? Carbon::parse($user->next_mcu_date)->translatedFormat('d F Y') : '-';
+
+        $message = "Yth. Bapak/Ibu {$user->name},\n\n";
+        $message .= "Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir pada tanggal {$formattedDate}.\n\n";
+        $message .= "Mohon untuk segera melakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.\n\n";
+        $message .= "Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.\n\n";
+        $message .= "OHS Department";
+
+        try {
+            $response = $fonnteService->sendMessage($phone, $message);
+            if (isset($response['status']) && $response['status']) {
+                McuNotificationLog::updateOrCreate([
+                    'user_id' => $user->id,
+                    'notification_stage' => 'MCU_EXPIRED_EMPLOYEE',
+                    'scheduled_date' => $user->next_mcu_date ?? now()->toDateString(),
+                ], [
+                    'channel' => 'whatsapp',
+                    'status' => 'Sent',
+                    'sent_at' => now(),
+                    'error_message' => null,
+                ]);
+
+                session()->flash('success', "Notifikasi masa berlaku MCU berakhir berhasil dikirim ke {$user->name} ({$phone}).");
+            } else {
+                session()->flash('error', "Gagal mengirim WhatsApp ke {$user->name}: " . ($response['message'] ?? 'Periksa koneksi/token Fonnte.'));
+            }
+        } catch (\Exception $e) {
+            session()->flash('error', "Error: " . $e->getMessage());
+        }
     }
 
     public function render()

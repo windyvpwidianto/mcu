@@ -68,8 +68,10 @@ class UsersImport implements ToModel, WithHeadingRow
             'department_name'     => $row['department_name'] ?? null,
             'employee_id'         => $normalizedEmployeeId,
             'date_commenced'      => $this->parseDate($row['date_commenced'] ?? null),
-            'pilih_divisi'             => $row['pilih_divisi'] ?? null,
+            'pilih_divisi'        => $row['pilih_divisi'] ?? null,
             'role_id'             => $row['role_id'] ?? null,
+            'nik'                 => $row['nik'] ?? null,
+            'phone_number'        => $row['phone_number'] ?? $row['phone'] ?? $row['nomor_hp'] ?? $row['no_hp'] ?? null,
             'updated_at'          => now(),
             'username'            => $normalizedUsername,
         ];

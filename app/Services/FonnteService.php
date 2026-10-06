@@ -12,8 +12,8 @@ class FonnteService
 
     public function __construct()
     {
-        $this->token = config('services.fonnte.token', env('FONNTE_TOKEN'));
-        $this->url = 'https://api.fonnte.com/send';
+        $this->token = config('services.fonnte.token', env('FONNTE_TOKEN', config('services.whatsapp.token', env('WHATSAPP_API_TOKEN'))));
+        $this->url = config('services.fonnte.url', env('FONNTE_URL', config('services.whatsapp.url', 'https://api.fonnte.com/send')));
     }
 
     /**
@@ -33,12 +33,30 @@ class FonnteService
         }
 
         try {
-            $response = Http::withHeaders([
-                'Authorization' => $this->token,
-            ])->post($this->url, [
-                'target' => $formattedTarget,
-                'message' => $message,
-            ]);
+            $host = parse_url($this->url, PHP_URL_HOST);
+            $ip = gethostbyname($host);
+            if ($ip === $host && $host === 'api.fonnte.com') {
+                $ip = '103.52.212.50';
+            }
+
+            $options = [];
+            if ($ip && $ip !== $host) {
+                $options['curl'] = [
+                    CURLOPT_RESOLVE => [
+                        "{$host}:443:{$ip}",
+                        "{$host}:80:{$ip}",
+                    ]
+                ];
+            }
+
+            $response = Http::withoutVerifying()
+                ->withOptions($options)
+                ->withHeaders([
+                    'Authorization' => $this->token,
+                ])->post($this->url, [
+                    'target' => $formattedTarget,
+                    'message' => $message,
+                ]);
 
             $result = $response->json();
 

@@ -72,7 +72,7 @@ class SendMcuReminders extends Command
 
             if (!$isContractor) {
                 // INTERNAL EMPLOYEE - Send WhatsApp
-                $this->processInternalEmployee($user, $stage, $nextMcu);
+                $this->processInternalEmployee($user, $stage, $nextMcu, $today);
             } else {
                 // CONTRACTOR - Grouping
                 $contractor = $user->contractors->first();
@@ -95,17 +95,22 @@ class SendMcuReminders extends Command
         $this->info('MCU Reminder Scheduler finished.');
     }
 
-    private function processInternalEmployee(User $user, $stage, Carbon $nextMcu)
+    private function processInternalEmployee(User $user, $stage, Carbon $nextMcu, Carbon $today)
     {
+        $logStage = $stage === 'MCU_EXPIRED' ? 'MCU_EXPIRED_EMPLOYEE' : $stage;
+
         $exists = McuNotificationLog::where('user_id', $user->id)
-            ->where('notification_stage', $stage)
+            ->where(function ($q) use ($logStage, $stage) {
+                $q->where('notification_stage', $logStage)
+                  ->orWhere('notification_stage', $stage);
+            })
             ->where('scheduled_date', $nextMcu->toDateString())
             ->exists();
 
         if (!$exists) {
             $log = McuNotificationLog::create([
                 'user_id' => $user->id,
-                'notification_stage' => $stage,
+                'notification_stage' => $logStage,
                 'channel' => 'whatsapp',
                 'scheduled_date' => $nextMcu->toDateString(),
                 'status' => 'Queued',
@@ -138,7 +143,7 @@ class SendMcuReminders extends Command
                 
                 SendMcuExpiredWhatsAppJob::dispatch($user, $nextMcu->toDateString());
             } else {
-                SendMcuWhatsAppJob::dispatch($user, $nextMcu->toDateString());
+                SendMcuWhatsAppJob::dispatch($log->id);
             }
             $this->info("Queued WA for User ID {$user->id} - Stage: {$stage}");
         }

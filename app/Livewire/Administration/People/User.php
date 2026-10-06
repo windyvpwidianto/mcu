@@ -7,6 +7,7 @@ use Livewire\Component;
 use App\Models\Contractor;
 use App\Models\Department;
 use App\Imports\UsersImport;
+use App\Imports\UserPhoneImport;
 use Livewire\WithPagination;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Validate;
@@ -26,6 +27,8 @@ class User extends Component
     public $showDeleteModal = false;
     public $showImportModal = false; // 🔹 untuk modal import
     public $file;
+    public $phoneFile;
+    public $phoneImportResults = null;
     // Property untuk menampilkan hasil
     public $importedCount = 0;
     public $skippedCount = 0;
@@ -238,6 +241,75 @@ class User extends Component
         }
     }
 
+    public function importPhone()
+    {
+        @set_time_limit(300);
+        @ini_set('memory_limit', '512M');
+
+        $this->validate([
+            'phoneFile' => [
+                'required',
+                'file',
+                'max:15360',
+                function ($attribute, $value, $fail) {
+                    if (!$value) return;
+                    $ext = strtolower($value->getClientOriginalExtension());
+                    if (!in_array($ext, ['xlsx', 'xls', 'csv'])) {
+                        $fail('Format file harus berupa Excel (.xlsx, .xls) atau CSV (.csv).');
+                    }
+                },
+            ],
+        ], [
+            'phoneFile.required' => 'File Excel / CSV wajib dipilih.',
+            'phoneFile.max'      => 'Ukuran file maksimal 15MB.',
+        ]);
+
+        try {
+            $import = new UserPhoneImport();
+            Excel::import($import, $this->phoneFile);
+
+            $this->phoneImportResults = [
+                'updated' => $import->getUpdatedCount(),
+                'notFound' => $import->getNotFoundCount(),
+                'skipped' => $import->getSkippedCount(),
+                'notFoundBadges' => $import->getNotFoundBadges(),
+            ];
+
+            $updated = $import->getUpdatedCount();
+            $notFound = $import->getNotFoundCount();
+            $skipped = $import->getSkippedCount();
+
+            $this->reset('phoneFile');
+
+            session()->flash('phone_success', "Berhasil update {$updated} nomor HP karyawan. (Tidak ditemukan: {$notFound}, Dilewati: {$skipped})");
+
+            $this->dispatch(
+                'alert',
+                [
+                    'text' => "Berhasil update {$updated} nomor HP berdasarkan ID Badge!",
+                    'duration' => 5000,
+                    'destination' => '#',
+                    'newWindow' => false,
+                    'close' => true,
+                    'backgroundColor' => "background: linear-gradient(135deg, #00c853, #00bfa5);",
+                ]
+            );
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('User importPhone Error: ' . $e->getMessage());
+            session()->flash('phone_error', 'Gagal memproses file: ' . $e->getMessage());
+
+            $this->dispatch(
+                'alert',
+                [
+                    'title' => "Gagal Impor Nomor HP",
+                    'text' => $e->getMessage(),
+                    'type' => 'error',
+                    'backgroundColor' => "background: linear-gradient(135deg, #f44336, #d32f2f);",
+                    'close' => true,
+                ]
+            );
+        }
+    }
 
     public function updatedSearch()
     {

@@ -10,11 +10,10 @@
                               <x-form.input-floating label="Cari Pelapor" model="searchPeople" placeholder="Cari Pelapor..."  />
                     </div>
                 </div>
-                <div>
-
+                <div class="flex items-center gap-1">
                     <x-button.btn-tooltip color="primary" icon="add" modalId="create_modal" tooltip="Tambah Employee" />
-                     <x-button.btn-tooltip modalId="import_modal" color="accent" icon="file-import" tooltip="Import Data" />
-
+                    <x-button.btn-tooltip modalId="import_modal" color="accent" icon="file-import" tooltip="Import Data User" />
+                    <x-button.btn-tooltip modalId="import_phone_modal" color="info" icon="excel" tooltip="Import No HP by ID Badge" />
                 </div>
             </div>
 
@@ -340,6 +339,92 @@
                 {{-- Tombol Batal --}}
                <form method="dialog">
                     <button class="btn btn-xs btn-error btn-soft">Batal</button>
+                </form>
+            </div>
+        </div>
+    </dialog>
+
+    <dialog class="modal" wire:ignore.self id="import_phone_modal">
+        <div class="w-11/12 max-w-lg modal-box">
+            <h3 class="text-lg font-bold flex items-center gap-2">
+                <svg class="w-5 h-5 text-info" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                Import Nomor HP by ID Badge
+            </h3>
+            <p class="text-xs text-base-content/70 mt-1">
+                Upload file Excel (.xlsx / .csv) untuk mengupdate otomatis nomor telepon karyawan berdasarkan ID Badge (Employee ID).
+            </p>
+
+            <div class="mt-3 p-3 bg-base-200/60 rounded-lg text-xs space-y-1">
+                <p class="font-semibold text-base-content">Format kolom yang didukung (Header Excel):</p>
+                <div class="grid grid-cols-2 gap-2 mt-1">
+                    <div class="bg-base-100 p-2 rounded border border-base-300">
+                        <span class="font-mono text-primary font-bold">id_badge</span> / <span class="font-mono text-primary font-bold">employee_id</span>
+                        <div class="text-[10px] text-base-content/60">ID Badge Karyawan</div>
+                    </div>
+                    <div class="bg-base-100 p-2 rounded border border-base-300">
+                        <span class="font-mono text-secondary font-bold">phone_number</span> / <span class="font-mono text-secondary font-bold">nomor_hp</span>
+                        <div class="text-[10px] text-base-content/60">Nomor HP / WhatsApp</div>
+                    </div>
+                </div>
+            </div>
+
+            <fieldset class="fieldset mt-4">
+                <label class="block font-medium text-xs">Pilih File Excel / CSV</label>
+                <input type="file" wire:model.live="phoneFile" accept=".xlsx,.xls,.csv"
+                    class="w-full input input-bordered focus:ring-1 focus:border-info focus:ring-info focus:outline-hidden input-xs" />
+
+                <x-label-error :messages="$errors->get('phoneFile')" />
+
+                <div wire:loading wire:target="phoneFile" class="mt-1 text-xs text-info flex items-center gap-1">
+                    <span class="loading loading-spinner loading-xs"></span>
+                    <span>Sedang mengunggah file ke server...</span>
+                </div>
+
+                @if ($phoneFile && !$errors->has('phoneFile'))
+                <div wire:loading.remove wire:target="phoneFile" class="mt-1 text-xs text-success font-medium flex items-center gap-1">
+                    <span>✓ File siap diimpor: <strong>{{ $phoneFile->getClientOriginalName() }}</strong></span>
+                </div>
+                @endif
+            </fieldset>
+
+            @if (session()->has('phone_success'))
+            <div class="my-2 alert alert-success text-xs">
+                {{ session('phone_success') }}
+            </div>
+            @endif
+
+            @if (session()->has('phone_error'))
+            <div class="my-2 alert alert-error text-xs">
+                {{ session('phone_error') }}
+            </div>
+            @endif
+
+            @if ($phoneImportResults)
+            <div class="my-3 p-3 bg-base-200 rounded-lg text-xs space-y-1">
+                <p class="font-semibold">Hasil Import Terakhir:</p>
+                <p class="text-success font-medium">✓ Berhasil diupdate: {{ $phoneImportResults['updated'] }} karyawan</p>
+                @if($phoneImportResults['notFound'] > 0)
+                <p class="text-warning font-medium">⚠ Tidak ditemukan: {{ $phoneImportResults['notFound'] }} ID Badge</p>
+                <p class="text-[11px] text-base-content/70 truncate">Badge: {{ implode(', ', array_slice($phoneImportResults['notFoundBadges'], 0, 10)) }} {{ count($phoneImportResults['notFoundBadges']) > 10 ? '...' : '' }}</p>
+                @endif
+                @if($phoneImportResults['skipped'] > 0)
+                <p class="text-base-content/60">Dilewati: {{ $phoneImportResults['skipped'] }} baris (data kosong)</p>
+                @endif
+            </div>
+            @endif
+
+            <div class="modal-action">
+                <button type="button" wire:click="importPhone" class="btn-xs btn btn-primary btn-soft"
+                    wire:loading.attr="disabled" wire:target="importPhone,phoneFile">
+                    <span wire:loading.remove wire:target="importPhone">Mulai Import</span>
+                    <span wire:loading wire:target="importPhone" class="flex items-center gap-1">
+                        <span class="loading loading-spinner loading-xs"></span>
+                        Mengimpor...
+                    </span>
+                </button>
+
+                <form method="dialog">
+                    <button type="submit" class="btn btn-xs btn-error btn-soft">Tutup</button>
                 </form>
             </div>
         </div>

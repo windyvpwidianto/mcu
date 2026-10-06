@@ -36,15 +36,33 @@ class WhatsAppChannel
         }
 
         try {
+            $url = config('services.whatsapp.url', 'https://api.fonnte.com/send');
+            $host = parse_url($url, PHP_URL_HOST);
+            $ip = gethostbyname($host);
+            if ($ip === $host && $host === 'api.fonnte.com') {
+                $ip = '103.52.212.50';
+            }
+
+            $options = [];
+            if ($ip && $ip !== $host) {
+                $options['curl'] = [
+                    CURLOPT_RESOLVE => [
+                        "{$host}:443:{$ip}",
+                        "{$host}:80:{$ip}",
+                    ]
+                ];
+            }
+
             // Contoh implementasi HTTP Request ke API WhatsApp (Misal: Fonnte)
-            // SESUAIKAN DENGAN DOKUMENTASI PROVIDER API ANDA
-            $response = Http::withoutVerifying()->withHeaders([
-                'Authorization' => config('services.whatsapp.token'), // Ambil token dari config
-            ])->post(config('services.whatsapp.url'), [
-                'target' => $phone,
-                'message' => $message,
-                'delay' => '2', // Mencegah pemblokiran anti-spam jika mengirim ke nomor yang sama berkali-kali dalam 1 detik
-            ]);
+            $response = Http::withoutVerifying()
+                ->withOptions($options)
+                ->withHeaders([
+                    'Authorization' => config('services.whatsapp.token'), // Ambil token dari config
+                ])->post($url, [
+                    'target' => $phone,
+                    'message' => $message,
+                    'delay' => '2', // Mencegah pemblokiran anti-spam jika mengirim ke nomor yang sama berkali-kali dalam 1 detik
+                ]);
 
             // Jika API merespon error, catat di log laravel (storage/logs/laravel.log)
             if ($response->failed()) {

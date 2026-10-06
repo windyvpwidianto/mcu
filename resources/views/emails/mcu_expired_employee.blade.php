@@ -72,7 +72,7 @@
             <p>Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir pada tanggal <strong>{{ $expiredDate }}</strong>.</p>
 
             <div class="highlight-box">
-                Mohon untuk segera melakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.
+                Mohon untuk segera melakukan konfirmasi ke Admin Departement untuk dapat dilakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.
             </div>
 
             <p>Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.</p>

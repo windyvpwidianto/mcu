@@ -48,7 +48,7 @@ class McuReminderNotification extends Notification implements ShouldQueue
                 ->subject('Pemberitahuan Masa Berlaku Medical Check Up (MCU) Berakhir - ' . $employeeName)
                 ->greeting("Yth. Bapak/Ibu {$employeeName},")
                 ->line("Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir pada tanggal {$formattedDate}.")
-                ->line("Mohon untuk segera melakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.")
+                ->line("Mohon untuk segera melakukan konfirmasi ke Admin Departement untuk dapat dilakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.")
                 ->line("Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.")
                 ->salutation("OHS Department");
         }
@@ -78,7 +78,7 @@ class McuReminderNotification extends Notification implements ShouldQueue
             $formattedDate = $this->participant->mcu_date ? Carbon::parse($this->participant->mcu_date)->translatedFormat('d F Y') : '-';
             $text = "Yth. Bapak/Ibu {$employeeName},\n\n";
             $text .= "Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir pada tanggal {$formattedDate}.\n\n";
-            $text .= "Mohon untuk segera melakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.\n\n";
+            $text .= "Mohon untuk segera melakukan konfirmasi ke Admin Departement untuk dapat dilakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.\n\n";
             $text .= "Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.\n\n";
             $text .= "OHS Department";
 

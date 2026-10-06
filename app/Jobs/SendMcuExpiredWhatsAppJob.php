@@ -38,7 +38,7 @@ class SendMcuExpiredWhatsAppJob implements ShouldQueue
 
         $message = "Yth. Bapak/Ibu {$this->user->name},\n\n";
         $message .= "Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir pada tanggal {$formattedDate}.\n\n";
-        $message .= "Mohon untuk segera melakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.\n\n";
+        $message .= "Mohon untuk segera melakukan konfirmasi ke Admin Departement untuk dapat dilakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.\n\n";
         $message .= "Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.\n\n";
         $message .= "OHS Department";
 

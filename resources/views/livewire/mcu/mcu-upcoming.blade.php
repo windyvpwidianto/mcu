@@ -207,11 +207,11 @@
                                         wire:loading.attr="disabled"
                                         wire:target="sendExpiredNotification({{ $user->id }})"
                                         class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold rounded-md text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 transition focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
-                                        title="Kirim Notifikasi MCU Berakhir via WhatsApp"
+                                        title="Kirim Notifikasi MCU Berakhir (WhatsApp & Email)"
                                     >
                                         <svg wire:loading.remove wire:target="sendExpiredNotification({{ $user->id }})" class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
                                         <svg wire:loading wire:target="sendExpiredNotification({{ $user->id }})" class="animate-spin w-3.5 h-3.5 text-red-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path></svg>
-                                        <span wire:loading.remove wire:target="sendExpiredNotification({{ $user->id }})">Kirim Notif WA</span>
+                                        <span wire:loading.remove wire:target="sendExpiredNotification({{ $user->id }})">Kirim Notif Expired</span>
                                         <span wire:loading wire:target="sendExpiredNotification({{ $user->id }})">Mengirim...</span>
                                     </button>
                                 @endif

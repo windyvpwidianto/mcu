@@ -39,8 +39,10 @@ class McuUpcoming extends Component
         }
 
         $phone = $user->phone_number ?? $user->whatsapp_number;
-        if (!$phone) {
-            session()->flash('error', "Nomor WhatsApp/telepon untuk {$user->name} tidak ditemukan.");
+        $email = $user->email;
+
+        if (!$phone && !$email) {
+            session()->flash('error', "Nomor WhatsApp/telepon dan email untuk {$user->name} tidak ditemukan.");
             return;
         }
 
@@ -52,26 +54,54 @@ class McuUpcoming extends Component
         $message .= "Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.\n\n";
         $message .= "OHS Department";
 
-        try {
-            $response = $fonnteService->sendMessage($phone, $message);
-            if (isset($response['status']) && $response['status']) {
+        $sentChannels = [];
+
+        // Kirim WhatsApp
+        if ($phone) {
+            try {
+                $response = $fonnteService->sendMessage($phone, $message);
+                if (isset($response['status']) && $response['status']) {
+                    McuNotificationLog::updateOrCreate([
+                        'user_id' => $user->id,
+                        'notification_stage' => 'MCU_EXPIRED_EMPLOYEE',
+                        'scheduled_date' => $user->next_mcu_date ?? now()->toDateString(),
+                        'channel' => 'whatsapp',
+                    ], [
+                        'status' => 'Sent',
+                        'sent_at' => now(),
+                        'error_message' => null,
+                    ]);
+                    $sentChannels[] = "WhatsApp ({$phone})";
+                }
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Error sending expired MCU WA to {$user->name}: " . $e->getMessage());
+            }
+        }
+
+        // Kirim Email
+        if ($email) {
+            try {
+                \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\McuExpiredEmployeeMail($user->name, $formattedDate));
                 McuNotificationLog::updateOrCreate([
                     'user_id' => $user->id,
                     'notification_stage' => 'MCU_EXPIRED_EMPLOYEE',
                     'scheduled_date' => $user->next_mcu_date ?? now()->toDateString(),
+                    'channel' => 'email',
                 ], [
-                    'channel' => 'whatsapp',
                     'status' => 'Sent',
                     'sent_at' => now(),
                     'error_message' => null,
                 ]);
-
-                session()->flash('success', "Notifikasi masa berlaku MCU berakhir berhasil dikirim ke {$user->name} ({$phone}).");
-            } else {
-                session()->flash('error', "Gagal mengirim WhatsApp ke {$user->name}: " . ($response['message'] ?? 'Periksa koneksi/token Fonnte.'));
+                $sentChannels[] = "Email ({$email})";
+            } catch (\Exception $e) {
+                \Illuminate\Support\Facades\Log::error("Error sending expired MCU email to {$user->name}: " . $e->getMessage());
             }
-        } catch (\Exception $e) {
-            session()->flash('error', "Error: " . $e->getMessage());
+        }
+
+        if (!empty($sentChannels)) {
+            session()->flash('success', "Notifikasi masa berlaku MCU berakhir berhasil dikirim ke {$user->name} via " . implode(' & ', $sentChannels) . ".");
+        } else {
+            session()->flash('error', "Gagal mengirim notifikasi ke {$user->name}. Periksa koneksi WhatsApp dan pengaturan Mail server.");
         }
     }
 

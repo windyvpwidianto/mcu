@@ -6,6 +6,7 @@ use App\Channels\WhatsAppChannel;
 use App\Models\McuRecord;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 use Illuminate\Support\Carbon;
 
@@ -29,8 +30,35 @@ class McuReminderNotification extends Notification implements ShouldQueue
             return $this->channels;
         }
 
-        // Karyawan hanya menerima WA
-        return [WhatsAppChannel::class];
+        $channels = [WhatsAppChannel::class];
+        if (!empty($notifiable->email)) {
+            $channels[] = 'mail';
+        }
+
+        return $channels;
+    }
+
+    public function toMail(object $notifiable): MailMessage
+    {
+        $employeeName = $this->participant->employee->name ?? ($notifiable->name ?? 'Karyawan');
+        $formattedDate = $this->participant->mcu_date ? Carbon::parse($this->participant->mcu_date)->translatedFormat('d F Y') : '-';
+
+        if (in_array($this->type, ['expired', 'overdue'])) {
+            return (new MailMessage)
+                ->subject('Pemberitahuan Masa Berlaku Medical Check Up (MCU) Berakhir - ' . $employeeName)
+                ->greeting("Yth. Bapak/Ibu {$employeeName},")
+                ->line("Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir pada tanggal {$formattedDate}.")
+                ->line("Mohon untuk segera melakukan pendaftaran Medical Check Up (MCU) terbaru dengan menghubungi OHS Department.")
+                ->line("Terima kasih atas perhatian dan kerja samanya dalam menjaga kesehatan dan keselamatan kerja.")
+                ->salutation("OHS Department");
+        }
+
+        return (new MailMessage)
+            ->subject('Pemberitahuan Jadwal MCU Tahunan - ' . $employeeName)
+            ->greeting("Halo Bapak/Ibu {$employeeName},")
+            ->line("Anda telah dijadwalkan untuk Medical Check-Up (MCU) pada tanggal {$formattedDate}.")
+            ->line("Mohon persiapkan diri Anda dan memastikan Anda dapat hadir pada jadwal yang ditentukan.")
+            ->salutation("OHS Department");
     }
 
     public function toWhatsApp(object $notifiable): array

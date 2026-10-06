@@ -9,6 +9,7 @@ use App\Models\McuNotificationLog;
 use Carbon\Carbon;
 use App\Jobs\SendMcuWhatsAppJob;
 use App\Jobs\SendMcuExpiredWhatsAppJob;
+use App\Jobs\SendMcuExpiredEmailJob;
 use App\Jobs\SendMcuContractorEmailJob;
 use App\Jobs\SendMcuExpiredContractorEmailJob;
 use App\Models\McuRecord;
@@ -142,10 +143,21 @@ class SendMcuReminders extends Command
                 $expiredRecord->update(['rescheduled_to_id' => $newRecord->id]);
                 
                 SendMcuExpiredWhatsAppJob::dispatch($user, $nextMcu->toDateString());
+
+                if (!empty($user->email)) {
+                    McuNotificationLog::create([
+                        'user_id' => $user->id,
+                        'notification_stage' => $logStage,
+                        'channel' => 'email',
+                        'scheduled_date' => $nextMcu->toDateString(),
+                        'status' => 'Queued',
+                    ]);
+                    SendMcuExpiredEmailJob::dispatch($user, $nextMcu->toDateString());
+                }
             } else {
                 SendMcuWhatsAppJob::dispatch($log->id);
             }
-            $this->info("Queued WA for User ID {$user->id} - Stage: {$stage}");
+            $this->info("Queued WA/Email for User ID {$user->id} - Stage: {$stage}");
         }
     }
 

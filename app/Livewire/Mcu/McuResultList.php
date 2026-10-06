@@ -26,7 +26,7 @@ class McuResultList extends Component
             'record.employee',
             'record.schedule'
         ])
-            ->whereIn('workflow_status', ['pending_doctor', 'reviewed'])
+            ->whereIn('workflow_status', ['pending_doctor', 'need_specialist', 'pending_specialist_review', 'reviewed'])
             ->whereNotNull('result_document')
             ->orderBy('created_at', 'desc')
             ->paginate(10);

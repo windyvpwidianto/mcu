@@ -40,11 +40,19 @@
                     </td>
                     <td class="px-4 py-3">
                         @if($result->workflow_status === 'reviewed')
-                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs uppercase">
+                        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs uppercase font-medium">
                             Selesai Direview
                         </span>
+                        @elseif($result->workflow_status === 'need_specialist')
+                        <span class="px-2 py-1 bg-amber-100 text-amber-800 rounded text-xs uppercase font-medium">
+                            Rujukan Spesialis
+                        </span>
+                        @elseif($result->workflow_status === 'pending_specialist_review')
+                        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs uppercase font-medium">
+                            Siap Re-evaluasi
+                        </span>
                         @else
-                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs uppercase">
+                        <span class="px-2 py-1 bg-yellow-100 text-yellow-800 rounded text-xs uppercase font-medium">
                             Menunggu Dokter
                         </span>
                         @endif

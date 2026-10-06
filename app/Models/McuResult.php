@@ -15,10 +15,12 @@ class McuResult extends Model
     protected $guarded = [];
 
     protected $casts = [
-        'follow_up_date'    => 'date',
-        'is_published'      => 'boolean',
-        'letter_updated_at' => 'datetime',
-        'reviewed_at'       => 'datetime',
+        'follow_up_date'          => 'date',
+        'specialist_consult_date' => 'date',
+        'is_published'            => 'boolean',
+        'letter_updated_at'       => 'datetime',
+        'reviewed_at'             => 'datetime',
+        're_reviewed_at'          => 'datetime',
     ];
 
     public function getActivitylogOptions(): LogOptions
@@ -49,5 +51,10 @@ class McuResult extends Model
     public function reviewedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function reReviewedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 're_reviewed_by');
     }
 }

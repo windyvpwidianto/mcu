@@ -45,8 +45,10 @@ class McuDashboard extends Component
             ->toArray();
 
         $workflowStatus = [
-            'pending_doctor' => $workflowStatusRaw['pending_doctor'] ?? 0,
-            'reviewed'       => $workflowStatusRaw['reviewed'] ?? 0,
+            'pending_doctor'            => $workflowStatusRaw['pending_doctor'] ?? 0,
+            'need_specialist'           => $workflowStatusRaw['need_specialist'] ?? 0,
+            'pending_specialist_review' => $workflowStatusRaw['pending_specialist_review'] ?? 0,
+            'reviewed'                  => $workflowStatusRaw['reviewed'] ?? 0,
         ];
 
         // --- 2. TAMBAHAN BARU: DATA TOP PENYAKIT ---

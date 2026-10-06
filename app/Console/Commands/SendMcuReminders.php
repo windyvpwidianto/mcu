@@ -147,7 +147,7 @@ class SendMcuReminders extends Command
                 if (!empty($user->email)) {
                     McuNotificationLog::create([
                         'user_id' => $user->id,
-                        'notification_stage' => $logStage,
+                        'notification_stage' => 'MCU_EXPIRED_EMAIL',
                         'channel' => 'email',
                         'scheduled_date' => $nextMcu->toDateString(),
                         'status' => 'Queued',

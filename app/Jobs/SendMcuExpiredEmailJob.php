@@ -47,9 +47,8 @@ class SendMcuExpiredEmailJob implements ShouldQueue
     private function updateLogStatus(string $status, ?string $errorMessage = null)
     {
         McuNotificationLog::where('user_id', $this->user->id)
-            ->whereIn('notification_stage', ['MCU_EXPIRED', 'MCU_EXPIRED_EMPLOYEE'])
+            ->where('notification_stage', 'MCU_EXPIRED_EMAIL')
             ->where('scheduled_date', $this->targetDate)
-            ->where('channel', 'email')
             ->update([
                 'status' => $status,
                 'sent_at' => $status === 'sent' ? now() : null,

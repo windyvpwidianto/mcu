@@ -84,10 +84,10 @@ class McuUpcoming extends Component
                 \Illuminate\Support\Facades\Mail::to($email)->send(new \App\Mail\McuExpiredEmployeeMail($user->name, $formattedDate));
                 McuNotificationLog::updateOrCreate([
                     'user_id' => $user->id,
-                    'notification_stage' => 'MCU_EXPIRED_EMPLOYEE',
+                    'notification_stage' => 'MCU_EXPIRED_EMAIL',
                     'scheduled_date' => $user->next_mcu_date ?? now()->toDateString(),
-                    'channel' => 'email',
                 ], [
+                    'channel' => 'email',
                     'status' => 'Sent',
                     'sent_at' => now(),
                     'error_message' => null,

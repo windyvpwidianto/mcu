@@ -266,7 +266,10 @@ class User extends Component
 
         try {
             $import = new UserPhoneImport();
-            Excel::import($import, $this->phoneFile);
+            $filePath = method_exists($this->phoneFile, 'getRealPath') && $this->phoneFile->getRealPath()
+                ? $this->phoneFile->getRealPath()
+                : $this->phoneFile->path();
+            $import->importFromPath($filePath);
 
             $this->phoneImportResults = [
                 'updated' => $import->getUpdatedCount(),

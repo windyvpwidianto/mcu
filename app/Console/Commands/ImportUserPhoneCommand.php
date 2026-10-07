@@ -38,7 +38,7 @@ class ImportUserPhoneCommand extends Command
 
         try {
             $import = new UserPhoneImport();
-            Excel::import($import, $filePath);
+            $import->importFromPath($filePath);
 
             $this->newLine();
             $this->info("=== HASIL IMPORT NOMOR HP ===");

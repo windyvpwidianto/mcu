@@ -136,23 +136,16 @@ class DoctorReview extends Component
 
         // Jika FIT TO WORK / FIT WITH NOTES langsung tuntas di review awal
         if (!$isTemporaryUnfit) {
-            // Update riwayat & target jadwal MCU tahun depan (+1 Tahun)
-            if ($result->mcu_master_data_id) {
-                $master = McuMasterData::find($result->mcu_master_data_id);
-                if ($master) {
-                    $master->histories()->create([
-                        'historical_date' => $master->mcu_date ?? now(),
-                        'notes'           => 'Hasil MCU (' . str_replace('_', ' ', $this->fit_status) . ') telah direview oleh dokter.'
-                    ]);
-                    $newTargetDate = \Carbon\Carbon::parse($master->mcu_date ?? now())->addYear();
-                    $master->update([
-                        'mcu_date'            => $newTargetDate,
-                        'notification_status' => 'pending'
-                    ]);
+            // Update process_status pada McuRecord & next_mcu_date pada employee
+            if ($result->record) {
+                $result->record->update(['process_status' => 'completed']);
+                if ($result->record->employee) {
+                    $newTargetDate = \Carbon\Carbon::parse($result->record->mcu_date ?? now())->addYear()->toDateString();
+                    $result->record->employee->update(['next_mcu_date' => $newTargetDate]);
                 }
             }
 
-            // Generate Sertifikat
+            // Generate Sertifikat Kelaikan Kerja
             if (in_array($this->fit_status, ['fit_to_work', 'fit_with_notes'])) {
                 try {
                     $fullCertNumber = McuFitLetterService::generateCertificateNumber($result);
@@ -284,19 +277,12 @@ class DoctorReview extends Component
 
         // Jika dinyatakan FIT TO WORK atau FIT WITH NOTES
         if (in_array($this->re_fit_status, ['fit_to_work', 'fit_with_notes'])) {
-            // Update riwayat & target jadwal MCU tahun depan (+1 Tahun)
-            if ($result->mcu_master_data_id) {
-                $master = McuMasterData::find($result->mcu_master_data_id);
-                if ($master) {
-                    $master->histories()->create([
-                        'historical_date' => now(),
-                        'notes'           => 'Hasil MCU Re-evaluasi (' . str_replace('_', ' ', $this->re_fit_status) . ') telah tuntas direview oleh dokter.'
-                    ]);
-                    $newTargetDate = \Carbon\Carbon::parse($master->mcu_date ?? now())->addYear();
-                    $master->update([
-                        'mcu_date'            => $newTargetDate,
-                        'notification_status' => 'pending'
-                    ]);
+            // Update process_status pada McuRecord & target jadwal MCU tahun depan (+1 Tahun)
+            if ($result->record) {
+                $result->record->update(['process_status' => 'completed']);
+                if ($result->record->employee) {
+                    $newTargetDate = \Carbon\Carbon::parse($result->record->mcu_date ?? now())->addYear()->toDateString();
+                    $result->record->employee->update(['next_mcu_date' => $newTargetDate]);
                 }
             }
 
@@ -339,9 +325,9 @@ class DoctorReview extends Component
     private function sendNotification(McuResult $result)
     {
         $employeeUser = $result->record?->employee;
-        $deptHeadUser = $result->record?->deptHead;
+        $deptHeadUser = $result->record?->deptHead ?? $result->record?->supervisor;
 
-        if ($employeeUser && $employeeUser->pilih_divisi === 'department') {
+        if ($employeeUser) {
             $employeeUser->notifyNow(new McuResultNotification($result, 'employee', [\App\Channels\WhatsAppChannel::class, 'database']));
             try {
                 $employeeUser->notify(new McuResultNotification($result, 'employee', ['mail']));

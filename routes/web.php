@@ -141,6 +141,7 @@ Route::middleware(['role:administrator,medical staff'])->group(function () {
     Route::get('mcu/upcoming', McuUpcoming::class)->name('mcu.upcoming');
     Route::get('mcu/dashboard', McuDashboard::class)->name('mcu.dashboard');
     Route::get('mcu/fit-letter/{id}', [\App\Http\Controllers\McuController::class, 'printFitLetter'])->name('mcu.fit-letter');
+    Route::get('mcu/referral-letter/{id}', [\App\Http\Controllers\McuController::class, 'printReferralLetter'])->name('mcu.referral-letter');
     Route::get('mcu/fit-letter/edit/{id}', [\App\Http\Controllers\McuController::class, 'editFitLetter'])->name('mcu.fit-letter.edit');
     Route::post('mcu/fit-letter/save/{id}', [\App\Http\Controllers\McuController::class, 'saveFitLetter'])->name('mcu.fit-letter.save');
     Route::post('mcu/fit-letter/reset/{id}', [\App\Http\Controllers\McuController::class, 'resetFitLetter'])->name('mcu.fit-letter.reset');

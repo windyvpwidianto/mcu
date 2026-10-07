@@ -162,10 +162,16 @@
                                 @endif
                             </td>
                             <td class="text-right">
-                                <button wire:click="openSpecialistModal({{ $result->id }})" class="btn btn-sm btn-warning gap-1">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                                    Upload Hasil Spesialis
-                                </button>
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <a href="{{ route('mcu.referral-letter', $result->id) }}" target="_blank" class="btn btn-sm btn-outline btn-error gap-1 tooltip" data-tip="Cetak Formulir Rujukan TT-OHS-FRO-028D">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                                        Cetak Rujukan
+                                    </a>
+                                    <button wire:click="openSpecialistModal({{ $result->id }})" class="btn btn-sm btn-warning gap-1">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                                        Upload Hasil
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         @empty
@@ -470,14 +476,18 @@
             <div><span class="font-bold">Spesialis Rujukan:</span> <span class="badge badge-sm badge-outline badge-primary">{{ $reReviewTarget->specialist_type ?? '-' }}</span></div>
             <div><span class="font-bold">Tanggal Konsultasi:</span> {{ $reReviewTarget->specialist_consult_date ? \Carbon\Carbon::parse($reReviewTarget->specialist_consult_date)->translatedFormat('d F Y') : '-' }}</div>
             
-            @if($reReviewTarget->specialist_document)
-            <div class="pt-1">
+            <div class="pt-1 flex flex-wrap gap-2">
+                @if($reReviewTarget->specialist_document)
                 <a href="{{ route('mcu.document.secure-view', \Illuminate\Support\Facades\Crypt::encryptString($reReviewTarget->specialist_document)) }}" target="_blank" class="btn btn-xs btn-outline btn-success gap-1">
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                     Buka Surat & Resume Dokter Spesialis
                 </a>
+                @endif
+                <a href="{{ route('mcu.referral-letter', $reReviewTarget->id) }}" target="_blank" class="btn btn-xs btn-outline btn-info gap-1">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Surat Rujukan Awal (TT-OHS-FRO-028D)
+                </a>
             </div>
-            @endif
 
             @if($reReviewTarget->specialist_notes)
             <div class="bg-base-100 p-2 rounded border border-base-300 mt-2">

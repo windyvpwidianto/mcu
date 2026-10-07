@@ -136,4 +136,21 @@ class McuController extends Controller
         $employeeName = $mcuResult->record?->employee?->name ?? 'Karyawan';
         return $pdf->stream('Surat_Keterangan_FIT_' . str_replace(' ', '_', $employeeName) . '.pdf');
     }
+
+    /**
+     * Cetak / Stream PDF Formulir Rujukan Medis (TT-OHS-FRO-028D).
+     */
+    public function printReferralLetter($id)
+    {
+        $mcuResult = McuResult::with([
+            'record.employee',
+            'diseaseCategories',
+            'reviewedBy'
+        ])->findOrFail($id);
+
+        $pdf = \App\Services\McuReferralLetterService::renderPdf($mcuResult);
+
+        $employeeName = $mcuResult->record?->employee?->name ?? 'Karyawan';
+        return $pdf->stream('Surat_Rujukan_Medis_' . str_replace(' ', '_', $employeeName) . '.pdf');
+    }
 }

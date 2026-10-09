@@ -133,6 +133,49 @@ class GenerateSchedule extends Component
         $this->dispatch('dateLoaded');
     }
 
+    public function rules()
+    {
+        return [
+            'manual_name' => 'required|string|max:255',
+            'manual_badge' => 'required|string|max:255',
+            'manual_nik' => 'nullable|string|max:255',
+            'manual_hp' => 'nullable|numeric',
+            'manual_gender' => 'nullable|in:L,P',
+            'manual_dob' => 'nullable|date',
+            'manual_date_commenced' => 'nullable|date',
+            'manual_role_id' => 'nullable',
+            'manual_password' => 'nullable|string|min:6',
+            'manual_password_confirmation' => 'nullable|same:manual_password',
+            'manual_username' => 'nullable|string|max:255',
+            'manual_email' => 'nullable|email|max:255',
+            'department_id' => 'required_without:contractor_id',
+            'contractor_id' => 'required_without:department_id',
+        ];
+    }
+
+    public function messages()
+    {
+        return [
+            'manual_name.required' => 'Nama Lengkap wajib diisi.',
+            'manual_badge.required' => 'ID Badge / Employee ID wajib diisi.',
+            'manual_hp.numeric' => 'Nomor HP harus berupa angka.',
+            'manual_password_confirmation.same' => 'Konfirmasi password tidak cocok.',
+            'department_id.required_without' => 'Departemen wajib dipilih jika kontraktor tidak diisi.',
+            'contractor_id.required_without' => 'Kontraktor wajib dipilih jika departemen tidak diisi.',
+            'manual_email.email' => 'Format email tidak valid.',
+        ];
+    }
+
+    public function updatedManualDeptCont($value)
+    {
+        if ($value === 'department') {
+            $this->reset('searchContractor', 'contractor_id');
+        } else {
+            $this->reset('searchDept', 'department_id');
+        }
+        $this->resetValidation(['department_id', 'contractor_id']);
+    }
+
     public function updatedSearchDept()
     {
         if (strlen($this->searchDept) > 1) {
@@ -154,7 +197,7 @@ class GenerateSchedule extends Component
         $this->searchDept = $name;
         $this->manual_dep_cont_name = $name;
         $this->showDropdown = false;
-        $this->validateOnly('department_id');
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
 
     public function updatedSearchContractor()
@@ -179,7 +222,7 @@ class GenerateSchedule extends Component
         $this->searchContractor = $name;
         $this->manual_dep_cont_name = $name;
         $this->showContractorDropdown = false;
-        $this->validateOnly('contractor_id');
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
 
     public function openImportPesertaModal()
@@ -210,42 +253,7 @@ class GenerateSchedule extends Component
             abort(403, 'Unauthorized action.');
         }
 
-        // Require fields that should be standard
-        $this->validate([
-            'manual_name' => 'required|string|max:255',
-            'manual_badge' => 'required|string|max:255', // Employee ID is required generally
-            'manual_nik' => 'nullable|string|max:255',
-            'manual_hp' => 'nullable|numeric',
-            'manual_gender' => 'nullable|in:L,P',
-            'manual_dob' => 'nullable|date',
-            'manual_date_commenced' => 'nullable|date',
-            'manual_role_id' => 'nullable',
-            
-            // Password confirmation logic
-            'manual_password' => 'nullable|string|min:6',
-            'manual_password_confirmation' => 'nullable|same:manual_password',
-            
-            'manual_username' => [
-                'nullable',
-                'string',
-                'max:255',
-            ],
-            'manual_email' => [
-                'nullable',
-                'email',
-                'max:255',
-            ],
-            'department_id' => 'required_without:contractor_id',
-            'contractor_id' => 'required_without:department_id',
-        ], [
-            'manual_name.required' => 'Nama Lengkap wajib diisi.',
-            'manual_badge.required' => 'ID Badge / Employee ID wajib diisi.',
-            'manual_hp.numeric' => 'Nomor HP harus berupa angka.',
-            'manual_password_confirmation.same' => 'Konfirmasi password tidak cocok.',
-            'department_id.required_without' => 'Departemen wajib dipilih jika kontraktor tidak diisi.',
-            'contractor_id.required_without' => 'Kontraktor wajib dipilih jika departemen tidak diisi.',
-            'manual_email.email' => 'Format email tidak valid.',
-        ]);
+        $this->validate();
 
         try {
             DB::beginTransaction();
@@ -255,32 +263,34 @@ class GenerateSchedule extends Component
 
             $userData = [
                 'name' => $this->manual_name,
-                'nik' => $this->manual_nik,
-                'phone_number' => $this->manual_hp,
-                'gender' => $this->manual_gender,
-                'date_birth' => $this->manual_dob,
-                'date_commenced' => $this->manual_date_commenced,
-                'role_id' => $this->manual_role_id,
+                'nik' => !empty($this->manual_nik) ? $this->manual_nik : null,
+                'phone_number' => !empty($this->manual_hp) ? $this->manual_hp : null,
+                'gender' => !empty($this->manual_gender) ? $this->manual_gender : null,
+                'date_birth' => !empty($this->manual_dob) ? $this->manual_dob : null,
+                'date_commenced' => !empty($this->manual_date_commenced) ? $this->manual_date_commenced : null,
+                'role_id' => !empty($this->manual_role_id) ? $this->manual_role_id : null,
                 'pilih_divisi' => $this->manual_deptCont,
             ];
 
             if ($this->manual_deptCont === 'department') {
-                $userData['department_name'] = $this->manual_dep_cont_name;
+                $userData['department_name'] = !empty($this->manual_dep_cont_name) ? $this->manual_dep_cont_name : null;
                 $userData['company_name'] = null;
             } else {
                 $userData['department_name'] = null;
-                $userData['company_name'] = $this->manual_dep_cont_name;
+                $userData['company_name'] = !empty($this->manual_dep_cont_name) ? $this->manual_dep_cont_name : null;
             }
 
             // Fallback for username if not filled (only on create or if explicitly missing)
-            if ($this->manual_username) {
+            if (!empty($this->manual_username)) {
                 $userData['username'] = $this->manual_username;
             } elseif (!$user) {
                 $userData['username'] = $this->manual_badge;
             }
 
-            if ($this->manual_email) {
+            if (!empty($this->manual_email)) {
                 $userData['email'] = $this->manual_email;
+            } else {
+                $userData['email'] = null;
             }
 
             if (!empty($this->manual_password)) {

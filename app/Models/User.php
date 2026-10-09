@@ -97,6 +97,29 @@ class User extends Authenticatable implements LdapAuthenticatable
                 }
             }
         });
+
+        static::saving(function ($user) {
+            $nullableFields = [
+                'username',
+                'email',
+                'employee_id',
+                'nik',
+                'phone_number',
+                'gender',
+                'date_birth',
+                'date_commenced',
+                'department_name',
+                'company_name',
+                'pilih_divisi',
+                'role_id',
+            ];
+
+            foreach ($nullableFields as $field) {
+                if (array_key_exists($field, $user->attributes) && is_string($user->attributes[$field]) && trim($user->attributes[$field]) === '') {
+                    $user->attributes[$field] = null;
+                }
+            }
+        });
     }
     public function scopeSearch($query, $term)
     {

@@ -334,7 +334,7 @@ class User extends Component
         $this->search = $name;
         $this->dep_cont = $name;
         $this->showDropdown = false;
-        $this->validateOnly('department_id');
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
     public function updatedSearchContractor()
     {
@@ -357,7 +357,19 @@ class User extends Component
         $this->searchContractor = $name;
         $this->dep_cont = $name;
         $this->showContractorDropdown = false;
-        $this->validateOnly('contractor_id');
+        $this->resetValidation(['department_id', 'contractor_id']);
+    }
+
+    public function updatedDeptCont($value)
+    {
+        if ($value === 'department') {
+            $this->reset('searchContractor', 'contractor_id');
+            $this->dep_cont = $this->search;
+        } else {
+            $this->reset('search', 'department_id');
+            $this->dep_cont = $this->searchContractor;
+        }
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
 
 
@@ -395,14 +407,18 @@ class User extends Component
             $this->department_id = Department::where('department_name', $user->department_name)->value('id');
             $this->contractor_id = null;
             $this->searchContractor = '';
+            $this->dep_cont = $user->department_name;
         } elseif ($this->deptCont === 'contractor') {
-            $this->searchContractor = $user->company_name;
-            $this->contractor_id = Contractor::where('contractor_name', $user->company_name)->value('id');
+            $contractorName = $user->company_name ?? $user->department_name;
+            $this->searchContractor = $contractorName;
+            $this->contractor_id = Contractor::where('contractor_name', $contractorName)->value('id');
             $this->department_id = null;
             $this->search = '';
+            $this->dep_cont = $contractorName;
         } else {
             $this->search = $user->department_name;
             $this->searchContractor = '';
+            $this->dep_cont = $user->department_name;
         }
 
         $this->showModal = true;
@@ -411,6 +427,17 @@ class User extends Component
 
     public function save()
     {
+        // Normalize empty string / whitespace values to null
+        $this->username = !empty(trim((string)$this->username)) ? trim((string)$this->username) : null;
+        $this->email = !empty(trim((string)$this->email)) ? trim((string)$this->email) : null;
+        $this->employee_id = !empty(trim((string)$this->employee_id)) ? trim((string)$this->employee_id) : null;
+        $this->nik = !empty(trim((string)$this->nik)) ? trim((string)$this->nik) : null;
+        $this->phone_number = !empty(trim((string)$this->phone_number)) ? trim((string)$this->phone_number) : null;
+        $this->date_birth = !empty($this->date_birth) ? $this->date_birth : null;
+        $this->date_commenced = !empty($this->date_commenced) ? $this->date_commenced : null;
+        $this->gender = !empty($this->gender) ? $this->gender : null;
+        $this->role_id = !empty($this->role_id) ? $this->role_id : null;
+
         $this->validate();
         $userData = [
             'name' => $this->name,
@@ -427,11 +454,11 @@ class User extends Component
         ];
         
         if ($this->deptCont === 'department') {
-            $userData['department_name'] = $this->dep_cont;
+            $userData['department_name'] = !empty($this->dep_cont) ? $this->dep_cont : null;
             $userData['company_name'] = null;
         } else {
             $userData['department_name'] = null;
-            $userData['company_name'] = $this->dep_cont;
+            $userData['company_name'] = !empty($this->dep_cont) ? $this->dep_cont : null;
         }
 
         // Logika untuk Password: HANYA perbarui jika field password diisi.

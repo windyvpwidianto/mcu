@@ -124,7 +124,7 @@ class Details extends Component
     {
         $user = User::findOrFail($id);
 
-        // ❗ PINDAHKAN INI KE ATAS: Set $this->userId DULU
+        // Set $this->userId
         $this->userId = $user->id;
         $this->name_user = $user->name;
         $this->fill($user->toArray());
@@ -138,15 +138,31 @@ class Details extends Component
             $this->department_id = Department::where('department_name', $user->department_name)->value('id');
             $this->contractor_id = null;
             $this->searchContractor = '';
+            $this->dep_cont = $user->department_name;
         } elseif ($this->deptCont === 'contractor') {
-            $this->searchContractor = $user->department_name;
-            $this->contractor_id = Contractor::where('contractor_name', $user->department_name)->value('id');
+            $contractorName = $user->company_name ?? $user->department_name;
+            $this->searchContractor = $contractorName;
+            $this->contractor_id = Contractor::where('contractor_name', $contractorName)->value('id');
             $this->department_id = null;
             $this->search = '';
+            $this->dep_cont = $contractorName;
         } else {
             $this->search = $user->department_name;
             $this->searchContractor = '';
+            $this->dep_cont = $user->department_name;
         }
+    }
+
+    public function updatedDeptCont($value)
+    {
+        if ($value === 'department') {
+            $this->reset('searchContractor', 'contractor_id');
+            $this->dep_cont = $this->search;
+        } else {
+            $this->reset('search', 'department_id');
+            $this->dep_cont = $this->searchContractor;
+        }
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
 
     public function updatedSearch()
@@ -169,7 +185,7 @@ class Details extends Component
         $this->search = $name;
         $this->dep_cont = $name;
         $this->showDropdown = false;
-        $this->validateOnly('department_id');
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
     public function updatedSearchContractor()
     {
@@ -192,12 +208,22 @@ class Details extends Component
         $this->searchContractor = $name;
         $this->dep_cont = $name;
         $this->showContractorDropdown = false;
-        $this->validateOnly('contractor_id');
+        $this->resetValidation(['department_id', 'contractor_id']);
     }
 
 
     public function save()
     {
+        // Normalize empty/whitespace values to null
+        $this->username = !empty(trim((string)$this->username)) ? trim((string)$this->username) : null;
+        $this->email = !empty(trim((string)$this->email)) ? trim((string)$this->email) : null;
+        $this->employee_id = !empty(trim((string)$this->employee_id)) ? trim((string)$this->employee_id) : null;
+        $this->phone_number = !empty(trim((string)$this->phone_number)) ? trim((string)$this->phone_number) : null;
+        $this->date_birth = !empty($this->date_birth) ? $this->date_birth : null;
+        $this->date_commenced = !empty($this->date_commenced) ? $this->date_commenced : null;
+        $this->gender = !empty($this->gender) ? $this->gender : null;
+        $this->role_id = !empty($this->role_id) ? $this->role_id : null;
+
         $this->validate();
 
         $userData = [
@@ -206,7 +232,6 @@ class Details extends Component
             'date_birth' => $this->date_birth,
             'username' => $this->username,
             'role_id' => $this->role_id,
-            'department_name' => $this->dep_cont, // atau nama kolom yang sesuai
             'pilih_divisi' => $this->deptCont,
             'employee_id' => $this->employee_id,
             'phone_number' => $this->phone_number,
@@ -214,15 +239,21 @@ class Details extends Component
             'email' => $this->email,
         ];
 
+        if ($this->deptCont === 'department') {
+            $userData['department_name'] = !empty($this->dep_cont) ? $this->dep_cont : null;
+            $userData['company_name'] = null;
+        } else {
+            $userData['department_name'] = null;
+            $userData['company_name'] = !empty($this->dep_cont) ? $this->dep_cont : null;
+        }
+
         // Logika untuk Password: HANYA perbarui jika field password diisi.
         if (!empty($this->password)) {
             $userData['password'] = Hash::make($this->password);
         }
 
-        // Asumsi: UserProfile adalah model yang tepat (misalnya App\Models\User atau UserProfile)
-        User::whereId($this->userId)
-            ->update($userData);
-
+        $user = User::findOrFail($this->userId);
+        $user->update($userData);
 
         $this->showModal = false;
         $this->dispatch(

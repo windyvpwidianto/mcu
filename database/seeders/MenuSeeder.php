@@ -175,6 +175,15 @@ class MenuSeeder extends Seeder
             'status'        => 'enabled',
             'urutan'        => 5,
         ]);
+        SubMenu::create([
+            'menu_id'       => $menuMcu->id,
+            'menu'          => 'Email Kontraktor',
+            'icon'          => 'envelope',
+            'route'         => 'mcu.contractor-email',
+            'request_route' => 'mcu/contractor-email*',
+            'status'        => 'enabled',
+            'urutan'        => 6,
+        ]);
 
         // ── 9. Menu: Event General ──────────────────────────────────────
         $menuEg = Menu::create([

@@ -71,7 +71,7 @@ class McuReminderNotification extends Notification implements ShouldQueue
             : null;
 
         if (!$phone) {
-            $phone = $this->participant->employee->phone_number ?? '';
+            $phone = $this->participant->employee->phone_number ?? $notifiable->phone_number ?? $notifiable->no_hp ?? $notifiable->phone ?? '';
         }
 
         if (in_array($this->type, ['expired', 'overdue'])) {

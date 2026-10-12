@@ -66,12 +66,47 @@
         </div>
     </div>
 
+    <!-- Floating Bulk Action Bar -->
+    @if(count($selectedEmployees) > 0)
+        <div class="fixed bottom-6 right-6 z-40 bg-base-100 border-2 border-primary/30 rounded-2xl shadow-2xl p-4 flex flex-col sm:flex-row items-center gap-4 transition-all duration-300">
+            <div class="flex items-center gap-3">
+                <div class="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-primary-content font-bold text-sm shadow">
+                    {{ count($selectedEmployees) }}
+                </div>
+                <div>
+                    <div class="text-sm font-bold text-base-content">{{ count($selectedEmployees) }} Karyawan Terpilih</div>
+                    <div class="text-xs text-base-content/60">Siap untuk dikirimi notifikasi</div>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-base-200">
+                @if(count($selectedEmployees) < $employees->total())
+                    <button wire:click="selectAllAcrossPages" type="button" class="btn btn-ghost btn-xs text-primary font-medium hover:bg-primary/10">
+                        Pilih Semua ({{ $employees->total() }})
+                    </button>
+                @endif
+                <button wire:click="clearSelection" type="button" class="btn btn-ghost btn-sm text-base-content/60 hover:text-base-content">
+                    Batal
+                </button>
+                <button wire:click="openBulkNotifModal" type="button" class="btn btn-primary btn-sm gap-2 shadow-md hover:shadow-lg">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    Kirim Pengingat Masal ({{ count($selectedEmployees) }})
+                </button>
+            </div>
+        </div>
+    @endif
+
     <!-- Daftar Karyawan -->
     <div class="border shadow-sm card bg-base-100 border-base-200 rounded-xl overflow-hidden">
         <div class="overflow-x-auto">
             <table class="table w-full table-zebra">
                 <thead class="bg-base-200 text-base-content/80">
                     <tr>
+                        <th class="w-12 text-center">
+                            <input type="checkbox" wire:model.live="selectAll" class="checkbox checkbox-primary checkbox-sm" title="Pilih Semua di Halaman Ini" />
+                        </th>
                         <th>Karyawan</th>
                         <th>Department</th>
                         <th>MCU Terakhir</th>
@@ -81,7 +116,10 @@
                 <tbody>
                     @forelse($employees as $employee)
 
-                        <tr class="hover">
+                        <tr class="hover {{ in_array((string)$employee->id, $selectedEmployees) ? 'bg-primary/5' : '' }}">
+                            <td class="text-center">
+                                <input type="checkbox" wire:model.live="selectedEmployees" value="{{ (string)$employee->id }}" class="checkbox checkbox-primary checkbox-sm" />
+                            </td>
                             <td>
                                 <div class="flex items-center space-x-3">
                                     <div class="avatar placeholder">
@@ -120,7 +158,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="4" class="text-center py-8 text-base-content/50">
+                            <td colspan="5" class="text-center py-8 text-base-content/50">
                                 Belum ada data karyawan atau tidak ditemukan.
                             </td>
                         </tr>
@@ -732,6 +770,140 @@
                     @else
                         <button wire:click="$set('importHistoryResults', null)" class="btn btn-primary shadow-md">Import File Lain</button>
                     @endif
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Modal Kirim Notifikasi Masal -->
+    @if ($showBulkNotifModal)
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in-down">
+            <div class="w-full max-w-lg bg-base-100 rounded-2xl shadow-2xl flex flex-col overflow-hidden border border-base-200">
+                <!-- Header Modal -->
+                <div class="p-5 border-b border-base-200 flex justify-between items-center bg-base-200/50">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2.5 rounded-xl bg-primary/10 text-primary">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-lg text-base-content">Kirim Pengingat MCU Masal</h3>
+                            <p class="text-xs text-base-content/60">Kirim notifikasi ke <span class="font-bold text-primary">{{ count($selectedEmployees) }}</span> karyawan terpilih</p>
+                        </div>
+                    </div>
+                    <button wire:click="closeBulkNotifModal" class="btn btn-sm btn-circle btn-ghost">✕</button>
+                </div>
+
+                <!-- Body Modal -->
+                <div class="p-6 space-y-5 overflow-y-auto max-h-[70vh]">
+                    <!-- Pilihan Jenis Notifikasi -->
+                    <div>
+                        <label class="block text-sm font-semibold text-base-content mb-2">Jenis Pemberitahuan</label>
+                        <div class="grid grid-cols-2 gap-3">
+                            <label class="label cursor-pointer flex items-center gap-3 p-3 rounded-xl border border-base-300 hover:border-primary transition {{ $notifType === 'schedule' ? 'bg-primary/5 border-primary ring-1 ring-primary' : 'bg-base-100' }}">
+                                <input type="radio" wire:model.live="notifType" value="schedule" class="radio radio-primary radio-sm" />
+                                <div>
+                                    <div class="text-sm font-bold text-base-content">Jadwal MCU</div>
+                                    <div class="text-xs text-base-content/60">Pemberitahuan jadwal pelaksanaan</div>
+                                </div>
+                            </label>
+                            <label class="label cursor-pointer flex items-center gap-3 p-3 rounded-xl border border-base-300 hover:border-primary transition {{ $notifType === 'expired' ? 'bg-primary/5 border-primary ring-1 ring-primary' : 'bg-base-100' }}">
+                                <input type="radio" wire:model.live="notifType" value="expired" class="radio radio-primary radio-sm" />
+                                <div>
+                                    <div class="text-sm font-bold text-base-content">Masa Berlaku Habis</div>
+                                    <div class="text-xs text-base-content/60">Pemberitahuan MCU kedaluwarsa</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Pilihan Saluran Pengiriman -->
+                    <div>
+                        <label class="block text-sm font-semibold text-base-content mb-2">Saluran Pengiriman</label>
+                        <div class="space-y-2">
+                            <label class="label cursor-pointer flex items-center justify-between p-3 rounded-xl border border-base-300 hover:border-primary transition {{ $notifChannel === 'all' ? 'bg-primary/5 border-primary ring-1 ring-primary' : 'bg-base-100' }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 rounded-lg bg-emerald-500/10 text-emerald-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-base-content">WhatsApp & Email (Keduanya)</div>
+                                        <div class="text-xs text-base-content/60">Mengirim pesan via WhatsApp dan Email secara bersamaan</div>
+                                    </div>
+                                </div>
+                                <input type="radio" wire:model.live="notifChannel" value="all" class="radio radio-primary radio-sm" />
+                            </label>
+
+                            <label class="label cursor-pointer flex items-center justify-between p-3 rounded-xl border border-base-300 hover:border-primary transition {{ $notifChannel === 'whatsapp' ? 'bg-primary/5 border-primary ring-1 ring-primary' : 'bg-base-100' }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 rounded-lg bg-green-500/10 text-green-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-base-content">Hanya WhatsApp</div>
+                                        <div class="text-xs text-base-content/60">Mengirim ke nomor telepon/WhatsApp terdaftar via Fonnte</div>
+                                    </div>
+                                </div>
+                                <input type="radio" wire:model.live="notifChannel" value="whatsapp" class="radio radio-primary radio-sm" />
+                            </label>
+
+                            <label class="label cursor-pointer flex items-center justify-between p-3 rounded-xl border border-base-300 hover:border-primary transition {{ $notifChannel === 'email' ? 'bg-primary/5 border-primary ring-1 ring-primary' : 'bg-base-100' }}">
+                                <div class="flex items-center gap-3">
+                                    <div class="p-2 rounded-lg bg-blue-500/10 text-blue-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="text-sm font-bold text-base-content">Hanya Email</div>
+                                        <div class="text-xs text-base-content/60">Mengirim ke alamat email perusahaan/pribadi terdaftar</div>
+                                    </div>
+                                </div>
+                                <input type="radio" wire:model.live="notifChannel" value="email" class="radio radio-primary radio-sm" />
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Pratinjau Pesan -->
+                    <div class="p-4 rounded-xl bg-base-200/60 border border-base-300 text-xs text-base-content/80 space-y-1 font-mono">
+                        <div class="font-bold text-primary font-sans mb-1 flex items-center gap-1.5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Pratinjau Pesan:
+                        </div>
+                        @if($notifType === 'schedule')
+                            <p><strong>Subjek:</strong> Pemberitahuan Jadwal MCU Tahunan</p>
+                            <p class="mt-1">"Halo Bapak/Ibu [Nama Karyawan], Anda telah dijadwalkan untuk Medical Check-Up (MCU) pada tanggal [Tanggal MCU]. Mohon persiapkan diri Anda dan memastikan Anda dapat hadir pada jadwal yang ditentukan..."</p>
+                        @else
+                            <p><strong>Subjek:</strong> Pemberitahuan Masa Berlaku MCU Berakhir</p>
+                            <p class="mt-1">"Yth. Bapak/Ibu [Nama Karyawan], Kami informasikan bahwa masa berlaku Medical Check Up (MCU) Anda telah berakhir. Mohon untuk segera melakukan konfirmasi ke Admin Departement..."</p>
+                        @endif
+                    </div>
+                </div>
+
+                <!-- Footer Modal -->
+                <div class="p-5 border-t border-base-200 bg-base-200/40 flex justify-end gap-3">
+                    <button wire:click="closeBulkNotifModal" type="button" class="btn btn-outline border-base-300 text-base-content/70">
+                        Batal
+                    </button>
+                    <button wire:click="sendBulkNotification" type="button" class="btn btn-primary shadow-md gap-2" wire:loading.attr="disabled">
+                        <span wire:loading.remove wire:target="sendBulkNotification" class="flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                            </svg>
+                            Kirim Sekarang ({{ count($selectedEmployees) }})
+                        </span>
+                        <span wire:loading wire:target="sendBulkNotification" class="flex items-center gap-2">
+                            <span class="loading loading-spinner loading-sm"></span>
+                            Mengirim Notifikasi...
+                        </span>
+                    </button>
                 </div>
             </div>
         </div>

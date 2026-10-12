@@ -220,4 +220,9 @@ class User extends Authenticatable implements LdapAuthenticatable
 
         return 'ACTIVE';
     }
+
+    public function routeNotificationForWhatsApp()
+    {
+        return $this->phone_number ?? $this->whatsapp_number ?? $this->no_hp ?? $this->phone;
+    }
 }

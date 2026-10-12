@@ -18,6 +18,8 @@ use App\Exports\McuHistoryTemplateExport;
 use App\Models\Role;
 use App\Models\Department;
 use App\Models\Contractor;
+use App\Models\McuNotificationLog;
+use App\Notifications\McuReminderNotification;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -78,17 +80,205 @@ class GenerateSchedule extends Component
     public $importHistoryErrors = [];
     public $historyYears = [2023, 2024, 2025, 2026];
 
+    // Bulk Notification properties
+    public $selectedEmployees = [];
+    public $selectAll = false;
+    public $showBulkNotifModal = false;
+    public $notifChannel = 'all'; // 'all', 'whatsapp', 'email'
+    public $notifType = 'schedule'; // 'schedule', 'expired'
+
     public function updatingSearch()
     {
         $this->resetPage();
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
     }
     public function updatingFilterYear()
     {
         $this->resetPage();
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
     }
     public function updatingFilterDepartment()
     {
         $this->resetPage();
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
+    }
+
+    public function updatedSelectAll($value)
+    {
+        if ($value) {
+            $this->selectedEmployees = $this->getCurrentPageEmployeeIds();
+        } else {
+            $this->selectedEmployees = [];
+        }
+    }
+
+    public function updatedSelectedEmployees()
+    {
+        $currentPageIds = $this->getCurrentPageEmployeeIds();
+        $this->selectAll = count($currentPageIds) > 0 && count(array_diff($currentPageIds, $this->selectedEmployees)) === 0;
+    }
+
+    protected function getFilteredEmployeesQuery()
+    {
+        $query = User::query();
+
+        if (!empty($this->search)) {
+            $query->where(function ($q) {
+                $q->where('name', 'like', '%' . $this->search . '%')
+                  ->orWhere('employee_id', 'like', '%' . $this->search . '%');
+            });
+        }
+
+        if (!empty($this->filterDepartment)) {
+            $query->where('department_name', $this->filterDepartment);
+        }
+
+        if (!empty($this->filterYear)) {
+            $query->whereHas('mcuRecords', function ($q) {
+                $q->where('mcu_year', $this->filterYear);
+            });
+        }
+
+        return $query;
+    }
+
+    protected function getCurrentPageEmployeeIds(): array
+    {
+        return $this->getFilteredEmployeesQuery()
+            ->paginate(15)
+            ->pluck('id')
+            ->map(fn($id) => (string)$id)
+            ->toArray();
+    }
+
+    public function selectAllAcrossPages()
+    {
+        $this->selectedEmployees = $this->getFilteredEmployeesQuery()
+            ->pluck('id')
+            ->map(fn($id) => (string)$id)
+            ->toArray();
+        $this->selectAll = true;
+    }
+
+    public function clearSelection()
+    {
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
+    }
+
+    public function openBulkNotifModal()
+    {
+        if (empty($this->selectedEmployees)) {
+            $this->dispatch('alert', [
+                'text' => 'Pilih minimal satu karyawan untuk dikirimi notifikasi.',
+                'duration' => 3000,
+                'close' => true,
+                'backgroundColor' => 'linear-gradient(to right, #f59e0b, #ef4444)',
+            ]);
+            return;
+        }
+        $this->showBulkNotifModal = true;
+    }
+
+    public function closeBulkNotifModal()
+    {
+        $this->showBulkNotifModal = false;
+    }
+
+    public function sendBulkNotification()
+    {
+        if (empty($this->selectedEmployees)) {
+            $this->dispatch('alert', [
+                'text' => 'Pilih minimal satu karyawan untuk dikirimi notifikasi.',
+                'duration' => 3000,
+                'close' => true,
+                'backgroundColor' => 'linear-gradient(to right, #f59e0b, #ef4444)',
+            ]);
+            return;
+        }
+
+        $users = User::whereIn('id', $this->selectedEmployees)
+            ->with(['mcuRecords' => function ($q) {
+                $q->orderBy('mcu_year', 'desc')->orderBy('mcu_date', 'desc');
+            }])
+            ->get();
+
+        $channels = match ($this->notifChannel) {
+            'whatsapp' => [\App\Channels\WhatsAppChannel::class],
+            'email'    => ['mail'],
+            default    => [\App\Channels\WhatsAppChannel::class, 'mail'],
+        };
+
+        $successCount = 0;
+        $failedCount  = 0;
+
+        foreach ($users as $user) {
+            $record = $user->mcuRecords->first();
+
+            if (!$record) {
+                $targetYear = $this->filterYear ?: date('Y');
+                $record = McuRecord::create([
+                    'employee_id'         => $user->id,
+                    'mcu_year'            => $targetYear,
+                    'mcu_date'            => now()->toDateString(),
+                    'attendance_status'   => 'scheduled',
+                    'process_status'      => 'scheduled',
+                    'notification_status' => 'pending',
+                ]);
+            }
+
+            try {
+                $user->notifyNow(new McuReminderNotification($record, $this->notifType, $channels));
+                $record->update(['notification_status' => 'notified']);
+
+                McuNotificationLog::create([
+                    'user_id'            => $user->id,
+                    'mcu_record_id'      => $record->id,
+                    'notification_stage' => 'BULK_' . strtoupper($this->notifType),
+                    'scheduled_date'     => $record->mcu_date ?? now()->toDateString(),
+                    'channel'            => $this->notifChannel,
+                    'status'             => 'Sent',
+                    'sent_at'            => now(),
+                ]);
+
+                $successCount++;
+            } catch (\Exception $e) {
+                Log::error("Bulk notification error for user {$user->id} ({$user->name}): " . $e->getMessage());
+                $failedCount++;
+            }
+        }
+
+        activity('mcu')
+            ->causedBy(auth()->user())
+            ->withProperties([
+                'total_selected' => count($this->selectedEmployees),
+                'success'        => $successCount,
+                'failed'         => $failedCount,
+                'channel'        => $this->notifChannel,
+                'type'           => $this->notifType,
+            ])
+            ->log('Mengirim notifikasi pengingat MCU masal');
+
+        $this->showBulkNotifModal = false;
+        $this->selectedEmployees = [];
+        $this->selectAll = false;
+
+        $msg = "Pengiriman notifikasi selesai! Berhasil: {$successCount}";
+        if ($failedCount > 0) {
+            $msg .= ", Gagal: {$failedCount}";
+        }
+
+        $this->dispatch('alert', [
+            'text'            => $msg,
+            'duration'        => 5000,
+            'close'           => true,
+            'backgroundColor' => $failedCount > 0 
+                ? 'linear-gradient(to right, #06b6d4, #f59e0b)' 
+                : 'linear-gradient(to right, #06b6d4, #22c55e)',
+        ]);
     }
 
     public function openImportModal()
@@ -947,27 +1137,8 @@ class GenerateSchedule extends Component
 
     public function render()
     {
-        $query = User::query();
-
-        if (!empty($this->search)) {
-            $query->where(function ($q) {
-                $q->where('name', 'like', '%' . $this->search . '%')
-                  ->orWhere('employee_id', 'like', '%' . $this->search . '%');
-            });
-        }
-
-        if (!empty($this->filterDepartment)) {
-            $query->where('department_name', $this->filterDepartment);
-        }
-
-        if (!empty($this->filterYear)) {
-            $query->whereHas('mcuRecords', function ($q) {
-                $q->where('mcu_year', $this->filterYear);
-            });
-        }
-
         // Include the latest MCU Record for each employee
-        $employees = $query->with(['mcuRecords' => function($q) {
+        $employees = $this->getFilteredEmployeesQuery()->with(['mcuRecords' => function($q) {
             $q->orderBy('mcu_year', 'desc')->orderBy('mcu_date', 'desc');
         }])->paginate(15);
 

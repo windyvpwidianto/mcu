@@ -440,7 +440,7 @@
 
     .modal-box,
     dialog.modal {
-        overflow: visible !important;
+        overflow-y: auto !important;
     }
 
     .flatpickr-calendar {

@@ -154,6 +154,9 @@ Route::middleware(['role:administrator,medical staff'])->group(function () {
             if (!Storage::disk('local')->exists($decryptedPath)) {
                 abort(404, 'Dokumen tidak ditemukan.');
             }
+            if (request()->has('download') || request()->has('save')) {
+                return Storage::disk('local')->download($decryptedPath);
+            }
             return Storage::disk('local')->response($decryptedPath);
         } catch (DecryptException $e) {
             abort(403, 'Akses ditolak: Link tidak valid.');

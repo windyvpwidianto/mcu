@@ -151,6 +151,12 @@ class McuController extends Controller
         $pdf = \App\Services\McuReferralLetterService::renderPdf($mcuResult);
 
         $employeeName = $mcuResult->record?->employee?->name ?? 'Karyawan';
-        return $pdf->stream('Surat_Rujukan_Medis_' . str_replace(' ', '_', $employeeName) . '.pdf');
+        $filename = 'Surat_Rujukan_Medis_' . str_replace(' ', '_', $employeeName) . '.pdf';
+
+        if (request()->has('stream') || request()->has('preview')) {
+            return $pdf->stream($filename);
+        }
+
+        return $pdf->download($filename);
     }
 }

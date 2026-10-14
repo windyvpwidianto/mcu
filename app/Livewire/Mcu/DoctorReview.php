@@ -68,6 +68,16 @@ class DoctorReview extends Component
         $this->showReviewModal = true;
     }
 
+    public function closeReviewModal()
+    {
+        $this->showReviewModal = false;
+        $this->resetValidation();
+        $this->reset([
+            'fit_status', 'doctor_notes', 'specialist_type', 
+            'follow_up_date', 'selectedDiseaseCategories', 'new_disease_name', 'selectedResultId'
+        ]);
+    }
+
     // --- Input inline penyakit baru ---
     public function saveNewDisease()
     {
@@ -204,6 +214,13 @@ class DoctorReview extends Component
         $this->showSpecialistModal = true;
     }
 
+    public function closeSpecialistModal()
+    {
+        $this->showSpecialistModal = false;
+        $this->resetValidation();
+        $this->reset(['upload_specialist_document', 'upload_specialist_consult_date', 'upload_specialist_notes', 'specialistResultId']);
+    }
+
     public function saveSpecialistDocument()
     {
         $this->validate([
@@ -250,6 +267,13 @@ class DoctorReview extends Component
         $this->reReviewResultId = $id;
         $this->re_fit_status = 'fit_to_work';
         $this->showReReviewModal = true;
+    }
+
+    public function closeReReviewModal()
+    {
+        $this->showReReviewModal = false;
+        $this->resetValidation();
+        $this->reset(['re_fit_status', 're_review_notes', 'reReviewResultId']);
     }
 
     public function saveReReview()

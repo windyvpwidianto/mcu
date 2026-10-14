@@ -136,12 +136,13 @@
             border-collapse: collapse;
         }
         .observation-table td {
-            padding: 4px;
+            padding: 3px 4px;
             vertical-align: top;
             font-size: 13px;
+            line-height: 1.5;
         }
         .observation-table td.label-obs {
-            width: 110px;
+            width: 130px;
             font-weight: bold;
         }
         .observation-table td.colon-obs {
@@ -149,6 +150,18 @@
         }
         .observation-table td.val-obs {
             text-align: justify;
+        }
+        .observation-table td.val-obs p {
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .observation-table td.val-obs p + p {
+            margin-top: 4px !important;
+        }
+        .observation-table td.val-obs ul,
+        .observation-table td.val-obs ol {
+            margin: 0 !important;
+            padding-left: 20px !important;
         }
 
         .closing-text {
@@ -181,8 +194,8 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 8.5px;
-            border-top: 1.5px solid #000;
-            border-bottom: 1.5px solid #000;
+            border-top: 1px solid #94a3b8;
+            border-bottom: 1px solid #94a3b8;
         }
         .footer-table td {
             border: 1px solid #94a3b8;
@@ -259,7 +272,7 @@
         </div>
 
         <div class="date-location">
-            Winuri, {{ $formattedDate }}
+            Toka Tindung, {{ $formattedDate }}
         </div>
 
         <div class="recipient-section">
@@ -279,11 +292,6 @@
                 <td class="label-col">Nama</td>
                 <td class="colon-col">:</td>
                 <td class="val-col">{{ $employee->name ?? '-' }}</td>
-            </tr>
-            <tr>
-                <td class="label-col">Umur</td>
-                <td class="colon-col">:</td>
-                <td class="val-col">{{ $age }}</td>
             </tr>
             <tr>
                 <td class="label-col">Jenis Kelamin</td>
@@ -311,13 +319,7 @@
                 <tr>
                     <td class="label-obs">Observasi</td>
                     <td class="colon-obs">:</td>
-                    <td class="val-obs">
-                        @if(!empty($result->doctor_notes))
-                            {!! $result->doctor_notes !!}
-                        @else
-                            Hasil evaluasi Medical Check Up berkala menunjukkan temuan klinis yang memerlukan konsultasi dan pemeriksaan penunjang lanjutan.
-                        @endif
-                    </td>
+                    <td class="val-obs">@if(!empty($result->doctor_notes)){!! $result->doctor_notes !!}@else Hasil evaluasi Medical Check Up berkala menunjukkan temuan klinis yang memerlukan konsultasi dan pemeriksaan penunjang lanjutan.@endif</td>
                 </tr>
                 <tr>
                     <td class="label-obs">Diagnosa</td>

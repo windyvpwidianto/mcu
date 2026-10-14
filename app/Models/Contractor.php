@@ -41,4 +41,36 @@ class Contractor extends Model
     {
         return $this->hasMany(IncidentReport::class, 'contractor_id');
     }
+
+    /**
+     * Get email addresses as an array of valid emails.
+     *
+     * @return array<string>
+     */
+    public function getEmailListAttribute(): array
+    {
+        if (empty($this->email)) {
+            return [];
+        }
+
+        $emails = preg_split('/[\s,;]+/', $this->email, -1, PREG_SPLIT_NO_EMPTY);
+        return array_values(array_unique(array_filter($emails, function ($email) {
+            return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
+        })));
+    }
+
+    /**
+     * Get all raw emails parsed from string.
+     *
+     * @return array<string>
+     */
+    public function getEmailsAttribute(): array
+    {
+        if (empty($this->email)) {
+            return [];
+        }
+
+        $emails = preg_split('/[\s,;]+/', $this->email, -1, PREG_SPLIT_NO_EMPTY);
+        return array_values(array_unique(array_map('trim', $emails)));
+    }
 }

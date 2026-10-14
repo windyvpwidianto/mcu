@@ -19,16 +19,7 @@ class ContractorEmail extends Component
     public $showEditModal = false;
     public $selectedContractorId = null;
     public $selectedContractorName = '';
-    public $email = '';
-
-    protected $rules = [
-        'email' => 'nullable|email:filter|max:255',
-    ];
-
-    protected $messages = [
-        'email.email' => 'Format alamat email tidak valid.',
-        'email.max'   => 'Alamat email maksimal 255 karakter.',
-    ];
+    public $emails = [''];
 
     public function updatingSearch()
     {
@@ -58,41 +49,99 @@ class ContractorEmail extends Component
 
         $this->selectedContractorId = $contractor->id;
         $this->selectedContractorName = $contractor->contractor_name;
-        $this->email = $contractor->email ?? '';
+        
+        $existingEmails = $contractor->emails;
+        $this->emails = !empty($existingEmails) ? $existingEmails : [''];
+
         $this->resetErrorBag();
         $this->showEditModal = true;
+    }
+
+    public function addEmail()
+    {
+        $this->emails[] = '';
+    }
+
+    public function removeEmail($index)
+    {
+        unset($this->emails[$index]);
+        $this->emails = array_values($this->emails);
+        if (empty($this->emails)) {
+            $this->emails = [''];
+        }
     }
 
     public function closeEditModal()
     {
         $this->showEditModal = false;
-        $this->reset(['selectedContractorId', 'selectedContractorName', 'email']);
+        $this->reset(['selectedContractorId', 'selectedContractorName']);
+        $this->emails = [''];
         $this->resetErrorBag();
     }
 
     public function saveEmail()
     {
-        $this->validate();
+        $this->resetErrorBag();
 
         if (!$this->selectedContractorId) {
             return;
         }
 
         $contractor = Contractor::find($this->selectedContractorId);
-        if ($contractor) {
-            $contractor->update([
-                'email' => !empty(trim($this->email)) ? trim($this->email) : null,
-            ]);
-
-            $this->dispatch('alert', [
-                'text' => "Email notifikasi untuk {$contractor->contractor_name} berhasil diperbarui.",
-                'duration' => 3500,
-                'close' => true,
-                'backgroundColor' => 'linear-gradient(to right, #10b981, #059669)',
-            ]);
-
-            session()->flash('success', "Email notifikasi untuk {$contractor->contractor_name} berhasil disimpan.");
+        if (!$contractor) {
+            $this->closeEditModal();
+            return;
         }
+
+        // Expand any comma, semicolon, or newline separated emails
+        $parsedList = [];
+        $hasErrors = false;
+
+        foreach ($this->emails as $idx => $rawInput) {
+            $trimmed = trim($rawInput ?? '');
+            if ($trimmed === '') {
+                continue;
+            }
+
+            // Split in case user pasted multiple emails into a single input
+            $parts = preg_split('/[\s,;]+/', $trimmed, -1, PREG_SPLIT_NO_EMPTY);
+            foreach ($parts as $part) {
+                $emailItem = strtolower(trim($part));
+                if (!filter_var($emailItem, FILTER_VALIDATE_EMAIL)) {
+                    $this->addError("emails.{$idx}", "Alamat email '{$part}' tidak valid.");
+                    $hasErrors = true;
+                } else {
+                    $parsedList[] = $emailItem;
+                }
+            }
+        }
+
+        if ($hasErrors) {
+            return;
+        }
+
+        // Remove duplicates while preserving order
+        $uniqueEmails = array_values(array_unique($parsedList));
+
+        $emailString = !empty($uniqueEmails) ? implode(', ', $uniqueEmails) : null;
+
+        $contractor->update([
+            'email' => $emailString,
+        ]);
+
+        $count = count($uniqueEmails);
+        $msgText = $count > 0 
+            ? "{$count} email notifikasi untuk {$contractor->contractor_name} berhasil diperbarui."
+            : "Email notifikasi untuk {$contractor->contractor_name} berhasil dikosongkan.";
+
+        $this->dispatch('alert', [
+            'text' => $msgText,
+            'duration' => 3500,
+            'close' => true,
+            'backgroundColor' => 'linear-gradient(to right, #10b981, #059669)',
+        ]);
+
+        session()->flash('success', $msgText);
 
         $this->closeEditModal();
     }

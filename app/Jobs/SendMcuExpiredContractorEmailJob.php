@@ -42,13 +42,19 @@ class SendMcuExpiredContractorEmailJob implements ShouldQueue
             $query->whereIn('name', ['Admin Contractor', 'Admin']);
         })->whereNotNull('email')->get();
 
-        if ($adminContractors->isEmpty()) {
-            $this->logError('No valid Admin Contractor email found.');
+        $targetEmails = $adminContractors->pluck('email')->toArray();
+        foreach ($contractor->email_list as $cEmail) {
+            $targetEmails[] = $cEmail;
+        }
+        $targetEmails = array_values(array_unique(array_filter($targetEmails)));
+
+        if (empty($targetEmails)) {
+            $this->logError('No valid recipient email found.');
             return;
         }
 
         try {
-            Mail::to($adminContractors)->send(new McuExpiredContractorMail($contractor->contractor_name, $this->expiredEmployees));
+            Mail::to($targetEmails)->send(new McuExpiredContractorMail($contractor->contractor_name, $this->expiredEmployees));
             $this->updateLogStatus('sent');
         } catch (\Exception $e) {
             $this->logError($e->getMessage());

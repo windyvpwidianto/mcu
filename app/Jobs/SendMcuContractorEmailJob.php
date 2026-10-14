@@ -50,18 +50,27 @@ class SendMcuContractorEmailJob implements ShouldQueue
             $q->whereIn('name', ['Admin Contractor', 'Admin']);
         })->get();
 
-        if ($admins->isEmpty()) {
-            $this->failLog($notifLog, 'No Admin Contractor found for this contractor.');
+        $targetEmails = [];
+        foreach ($admins as $admin) {
+            if ($admin->email) {
+                $targetEmails[] = $admin->email;
+            }
+        }
+        foreach ($contractor->email_list as $cEmail) {
+            $targetEmails[] = $cEmail;
+        }
+        $targetEmails = array_values(array_unique(array_filter($targetEmails)));
+
+        if (empty($targetEmails)) {
+            $this->failLog($notifLog, 'No recipient email found for this contractor.');
             return;
         }
 
         $usersToNotify = User::whereIn('id', $this->userIds)->get();
 
         try {
-            foreach ($admins as $admin) {
-                if ($admin->email) {
-                    Mail::to($admin->email)->send(new McuContractorSummaryMail($contractor, $usersToNotify, $notifLog->notification_stage));
-                }
+            foreach ($targetEmails as $recipientEmail) {
+                Mail::to($recipientEmail)->send(new McuContractorSummaryMail($contractor, $usersToNotify, $notifLog->notification_stage));
             }
 
             $notifLog->update([

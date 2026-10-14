@@ -37,15 +37,16 @@ class SendMcuContractorRecapEmailJob implements ShouldQueue
      */
     public function handle(): void
     {
-        if (!$this->contractor->email) {
-            $this->logError('Contractor email is missing');
+        $emails = $this->contractor->email_list;
+        if (empty($emails)) {
+            $this->logError('Contractor email is missing or invalid');
             return;
         }
 
         $monthName = Carbon::parse($this->targetDate)->translatedFormat('F Y');
 
         try {
-            Mail::to($this->contractor->email)->send(new McuContractorRecapMail($this->contractor, $this->records, $monthName));
+            Mail::to($emails)->send(new McuContractorRecapMail($this->contractor, $this->records, $monthName));
             
             $this->updateLogStatus('Sent');
         } catch (\Exception $e) {

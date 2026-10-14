@@ -181,14 +181,21 @@
 
                             <!-- Alamat Email -->
                             <td class="py-4 px-6">
-                                @if(!empty($contractor->email))
-                                    <div class="flex items-center gap-2">
-                                        <svg class="w-4 h-4 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                        </svg>
-                                        <a href="mailto:{{ $contractor->email }}" class="font-medium text-emerald-700 hover:text-emerald-900 hover:underline">
-                                            {{ $contractor->email }}
-                                        </a>
+                                @php
+                                    $emails = $contractor->emails;
+                                @endphp
+                                @if(!empty($emails))
+                                    <div class="flex flex-col gap-1.5 max-w-sm">
+                                        @foreach($emails as $cEmail)
+                                            <div class="inline-flex items-center gap-1.5">
+                                                <svg class="w-3.5 h-3.5 text-emerald-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                                </svg>
+                                                <a href="mailto:{{ $cEmail }}" class="font-medium text-emerald-700 hover:text-emerald-900 hover:underline text-xs break-all">
+                                                    {{ $cEmail }}
+                                                </a>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 @else
                                     <div class="flex items-center gap-2 text-gray-400 italic text-xs">
@@ -202,10 +209,13 @@
 
                             <!-- Status Email Badge -->
                             <td class="py-4 px-6 text-center">
-                                @if(!empty($contractor->email))
+                                @php
+                                    $emailCount = count($contractor->emails);
+                                @endphp
+                                @if($emailCount > 0)
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                        Tersedia
+                                        {{ $emailCount > 1 ? $emailCount . ' Email' : 'Tersedia' }}
                                     </span>
                                 @else
                                     <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
@@ -248,9 +258,9 @@
                                     @if(!empty($contractor->email))
                                         <button 
                                             wire:click="clearEmail({{ $contractor->id }})"
-                                            wire:confirm="Yakin ingin menghapus email notifikasi untuk {{ $contractor->contractor_name }}?" 
+                                            wire:confirm="Yakin ingin menghapus seluruh email notifikasi untuk {{ $contractor->contractor_name }}?" 
                                             class="btn btn-xs btn-ghost text-red-500 hover:bg-red-50 rounded-lg p-1"
-                                            title="Hapus Email"
+                                            title="Hapus Seluruh Email"
                                         >
                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -291,7 +301,7 @@
     <!-- Modal Form Edit Email -->
     @if($showEditModal)
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-fade-in">
-            <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
+            <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100">
                 <!-- Modal Header -->
                 <div class="p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
                     <div class="flex items-center gap-3">
@@ -302,10 +312,10 @@
                         </div>
                         <div>
                             <h3 class="font-bold text-gray-900 text-base">Atur Email PIC Kontraktor</h3>
-                            <p class="text-xs text-gray-500">Notifikasi MCU akan dikirim ke alamat ini</p>
+                            <p class="text-xs text-gray-500">Notifikasi MCU akan dikirim ke seluruh alamat email ini</p>
                         </div>
                     </div>
-                    <button wire:click="closeEditModal" class="btn btn-sm btn-circle btn-ghost text-gray-400 hover:text-gray-600">✕</button>
+                    <button type="button" wire:click="closeEditModal" class="btn btn-sm btn-circle btn-ghost text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
                 <!-- Modal Body -->
@@ -317,28 +327,74 @@
                             <div class="text-sm font-bold text-gray-800 mt-0.5">{{ $selectedContractorName }}</div>
                         </div>
 
-                        <!-- Input Email -->
+                        <!-- Input Email List -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wider">
-                                Alamat Email PIC / HSE <span class="text-red-500">*</span>
-                            </label>
-                            <input 
-                                type="email" 
-                                wire:model="email" 
-                                placeholder="contoh: safety.pic@perusahaan.com"
-                                class="input input-bordered w-full rounded-xl text-sm focus:border-emerald-500 @error('email') border-red-500 ring-1 ring-red-500 @enderror"
-                                autofocus
-                            />
-                            @error('email')
-                                <p class="text-xs text-red-500 mt-1 flex items-center gap-1">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    {{ $message }}
-                                </p>
-                            @enderror
-                            <p class="text-xs text-gray-400 mt-2">
-                                💡 Seluruh notifikasi terkait pekerja kontraktor ini (pengingat jadwal H-30/H-7/H-3, rekapitulasi, dan masa berlaku MCU) akan dikirimkan ke email ini.
+                            <div class="flex items-center justify-between mb-2">
+                                <label class="block text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    Daftar Email PIC / HSE <span class="text-red-500">*</span>
+                                </label>
+                                <span class="text-xs text-gray-400 font-medium">
+                                    {{ count($emails) }} Alamat Email
+                                </span>
+                            </div>
+
+                            <div class="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
+                                @foreach($emails as $index => $emailItem)
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <div class="relative flex-1">
+                                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                                                    </svg>
+                                                </div>
+                                                <input 
+                                                    type="email" 
+                                                    wire:model="emails.{{ $index }}" 
+                                                    placeholder="contoh: pic.hse{{ $index > 0 ? ($index + 1) : '' }}@perusahaan.com"
+                                                    class="input input-bordered w-full pl-9 rounded-xl text-sm focus:border-emerald-500 @error('emails.' . $index) border-red-500 ring-1 ring-red-500 @enderror"
+                                                />
+                                            </div>
+
+                                            @if(count($emails) > 1)
+                                                <button 
+                                                    type="button" 
+                                                    wire:click="removeEmail({{ $index }})" 
+                                                    class="btn btn-sm btn-ghost btn-square text-red-500 hover:bg-red-50 hover:text-red-700 rounded-xl"
+                                                    title="Hapus email ini"
+                                                >
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            @endif
+                                        </div>
+
+                                        @error('emails.' . $index)
+                                            <p class="text-xs text-red-500 mt-1 pl-1 flex items-center gap-1">
+                                                <svg class="w-3.5 h-3.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                                {{ $message }}
+                                            </p>
+                                        @enderror
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <button 
+                                type="button" 
+                                wire:click="addEmail" 
+                                class="btn btn-sm btn-outline border-dashed border-gray-300 hover:border-emerald-500 hover:bg-emerald-50 text-emerald-700 normal-case rounded-xl w-full flex items-center justify-center gap-2 mt-3"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                                </svg>
+                                <span>Tambah Email Lainnya</span>
+                            </button>
+
+                            <p class="text-xs text-gray-400 mt-3">
+                                💡 <strong>Tip:</strong> Seluruh email di atas akan menerima notifikasi jadwal & expired MCU. Anda bisa menambahkan lebih dari satu email untuk perwakilan PIC/HSE.
                             </p>
                         </div>
                     </div>
